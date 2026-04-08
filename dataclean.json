@@ -1,0 +1,162 @@
+{
+"_comment": "The 4 key indicators selected: date, document_type, entity, total_amount",
+
+"documents": [
+
+
+{
+  "document_type": "material_invoice",
+  "date": "2024-04-30",
+  "due_date": "2024-05-31",
+  "entity": "Lyreco",
+  "total_amount": 277.13,
+  "vat": 48.10,
+  "taxable_base": 229.03,
+  "payment_method": "SEPA",
+  "category": "office_supplies"
+},
+{
+  "document_type": "material_invoice",
+  "date": "2024-05-31",
+  "due_date": "2024-06-30",
+  "entity": "Lyreco",
+  "total_amount": 261.24,
+  "vat": 45.34,
+  "taxable_base": 215.90,
+  "payment_method": "SEPA",
+  "category": "office_supplies"
+},
+{
+  "document_type": "material_invoice",
+  "date": "2024-06-30",
+  "due_date": "2024-07-31",
+  "entity": "Lyreco",
+  "total_amount": 34.36,
+  "vat": 5.96,
+  "taxable_base": 28.40,
+  "payment_method": "SEPA",
+  "category": "office_supplies"
+},
+{
+  "document_type": "material_invoice",
+  "date": "2024-10-31",
+  "due_date": "2024-11-30",
+  "entity": "Lyreco",
+  "total_amount": 198.56,
+  "vat": 34.46,
+  "taxable_base": 164.10,
+  "payment_method": "SEPA",
+  "category": "office_supplies"
+},
+
+{
+  "document_type": "service_invoice",
+  "date": "2024-05-23",
+  "entity": "Maintenance",
+  "total_amount": 2548.02,
+  "vat": 442.22,
+  "taxable_base": 2105.80,
+  "category": "technical_services"
+},
+{
+  "document_type": "service_invoice",
+  "date": "2024-07-05",
+  "entity": "Maintenance",
+  "total_amount": 348.48,
+  "vat": 60.48,
+  "taxable_base": 288.00,
+  "category": "technical_services"
+},
+{
+  "document_type": "service_invoice",
+  "date": "2024-09-13",
+  "entity": "Maintenance",
+  "total_amount": 1012.98,
+  "vat": 175.81,
+  "taxable_base": 837.17,
+  "category": "technical_services"
+},
+
+{
+  "document_type": "cleaning_invoice",
+  "date": "2024-06-20",
+  "entity": "Neteges",
+  "total_amount": 750.26,
+  "vat": 130.21,
+  "taxable_base": 620.05,
+  "category": "cleaning"
+},
+{
+  "document_type": "cleaning_invoice",
+  "date": "2024-05-27",
+  "entity": "Neteges",
+  "total_amount": 454.72,
+  "vat": 78.92,
+  "taxable_base": 375.80,
+  "category": "cleaning"
+},
+
+{
+  "document_type": "telecom_invoice",
+  "date": "2024-03-04",
+  "entity": "O2",
+  "total_amount": 50.00,
+  "vat": 8.67,
+  "taxable_base": 41.32,
+  "category": "telecommunications"
+},
+{
+  "document_type": "telecom_invoice",
+  "date": "2024-05",
+  "entity": "DIGI",
+  "total_amount": 30.00,
+  "vat": 5.21,
+  "taxable_base": 24.79,
+  "category": "telecommunications"
+},
+
+{
+  "document_type": "water_consumption",
+  "date": "2024-02-25",
+  "entity": "Water",
+  "average_consumption_liters": 200
+},
+{
+  "document_type": "water_consumption",
+  "date": "2024-02-28",
+  "entity": "Water",
+  "average_consumption_liters": 400
+},
+{
+  "document_type": "water_consumption",
+  "date": "2024-02-29",
+  "entity": "Water",
+  "average_consumption_liters": 450
+},
+
+{
+  "document_type": "indicator",
+  "date": "2024-11-15",
+  "entity": "ASIXc1A",
+  "percentage": 15.00
+},
+{
+  "document_type": "indicator",
+  "date": "2025-01-20",
+  "entity": "ASIXc1C",
+  "percentage": 68.75
+},
+
+{
+  "document_type": "energy_report",
+  "date": "2025-01",
+  "entity": "ITB_Plant",
+  "total_production_kwh": 72021.35,
+  "total_consumption_kwh": 165.55,
+  "self_consumption_percentage": 100,
+  "revenue_eur": 0.31
+}
+
+
+]
+}
