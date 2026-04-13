@@ -17,6 +17,10 @@
   <div class="left">
     <h1>⚡ Energy Dashboard</h1>
 
+    <p class="subtitle">
+      Monitor consumption, costs and efficiency in real time
+    </p>
+
     <p><strong>Loaded file:</strong></p>
     <p class="file">dataclean.json</p>
 
@@ -31,12 +35,12 @@
   <!-- RIGHT -->
   <div class="right">
 
-    <div class="card"><h2>Electric (Year)</h2><p id="electricYear">-</p></div>
-    <div class="card"><h2>Electric (Period)</h2><p id="electricPeriod">-</p></div>
-    <div class="card"><h2>Water (Year)</h2><p id="waterYear">-</p></div>
-    <div class="card"><h2>Water (Period)</h2><p id="waterPeriod">-</p></div>
-    <div class="card"><h2>Office Supplies</h2><p id="officeYear">-</p></div>
-    <div class="card"><h2>Cleaning</h2><p id="cleaningYear">-</p></div>
+    <div class="card"><h2>⚡ Electric (Year)</h2><p id="electricYear">-</p></div>
+    <div class="card"><h2>⚡ Electric (Period)</h2><p id="electricPeriod">-</p></div>
+    <div class="card"><h2>💧 Water (Year)</h2><p id="waterYear">-</p></div>
+    <div class="card"><h2>💧 Water (Period)</h2><p id="waterPeriod">-</p></div>
+    <div class="card"><h2>📦 Office Supplies</h2><p id="officeYear">-</p></div>
+    <div class="card"><h2>🧼 Cleaning</h2><p id="cleaningYear">-</p></div>
 
     <div class="card chart-card">
       <h2>Consumption Overview</h2>
@@ -107,8 +111,14 @@ function renderCharts(energy, water, office, cleaning) {
       maintainAspectRatio: true,
       plugins: { legend: { display: false } },
       scales: {
-        x: { ticks: { color: "#94a3b8" } },
-        y: { ticks: { color: "#94a3b8" } }
+        x: {
+          ticks: { color: "#94a3b8" },
+          grid: { display: false }
+        },
+        y: {
+          ticks: { color: "#94a3b8" },
+          grid: { color: "rgba(255,255,255,0.05)" }
+        }
       }
     }
   });
@@ -126,6 +136,7 @@ function renderCharts(energy, water, office, cleaning) {
     options: {
       responsive: true,
       maintainAspectRatio: true,
+      cutout: "60%",
       plugins: {
         legend: {
           labels: { color: "#cbd5f5" }
