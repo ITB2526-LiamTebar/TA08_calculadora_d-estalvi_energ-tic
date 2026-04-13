@@ -99,3 +99,63 @@ button {
 .hidden {
   display: none;
 }
+/* 🔥 TITLE UPGRADE */
+.left h1 {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 10px;
+
+  background: linear-gradient(90deg, #22c55e, #38bdf8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* subtitle */
+.left p strong {
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+/* ✨ CARD IMPROVEMENTS */
+.card {
+  position: relative;
+  overflow: hidden;
+}
+
+/* subtle glow */
+.card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at top right, rgba(56,189,248,0.15), transparent);
+  opacity: 0;
+  transition: 0.3s;
+}
+
+.card:hover::after {
+  opacity: 1;
+}
+
+/* 🧠 add small icon space */
+.card h2 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 📊 chart titles spacing */
+.chart-card h2 {
+  margin-bottom: 10px;
+}
+
+/* ✨ make values pop */
+.card p {
+  font-size: 22px;
+  letter-spacing: 0.5px;
+}
+
+/* 📦 reduce empty feeling */
+.chart-card {
+  padding: 20px;
+}
