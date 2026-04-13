@@ -13,7 +13,7 @@
 
 <div class="container">
 
-  <!-- LEFT PANEL -->
+  <!-- LEFT -->
   <div class="left">
     <h1>⚡ Energy Dashboard</h1>
 
@@ -24,13 +24,11 @@
     <button onclick="toggleInstructions()">JSON Instructions</button>
 
     <div id="instructions" class="hidden">
-      <pre>
-Your JSON is already valid ✔
-      </pre>
+      <pre>Your JSON is already valid ✔</pre>
     </div>
   </div>
 
-  <!-- RIGHT PANEL -->
+  <!-- RIGHT -->
   <div class="right">
 
     <div class="card"><h2>Electric (Year)</h2><p id="electricYear">-</p></div>
@@ -106,6 +104,7 @@ function renderCharts(energy, water, office, cleaning) {
     },
     options: {
       responsive: true,
+      maintainAspectRatio: true,
       plugins: { legend: { display: false } },
       scales: {
         x: { ticks: { color: "#94a3b8" } },
@@ -125,6 +124,8 @@ function renderCharts(energy, water, office, cleaning) {
       }]
     },
     options: {
+      responsive: true,
+      maintainAspectRatio: true,
       plugins: {
         legend: {
           labels: { color: "#cbd5f5" }
