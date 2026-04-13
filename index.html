@@ -17,7 +17,7 @@
 
 ```
 <p><strong>Loaded file:</strong></p>
-<p class="file">data.json</p>
+<p class="file">dataclean.json</p>
 
 <button onclick="loadData()">Run Calculation</button>
 <button onclick="toggleInstructions()">JSON Instructions</button>
@@ -99,7 +99,7 @@
 <script>
 async function loadData() {
   try {
-    const res = await fetch("data.json");
+    const res = await fetch("dataclean.json");
     const data = await res.json();
     const docs = data.documents;
 
@@ -130,7 +130,7 @@ async function loadData() {
     document.getElementById("cleaningYear").textContent = "€" + cleaningTotal.toFixed(2);
 
   } catch (error) {
-    alert("Error loading data.json. Make sure it exists.");
+    alert("Error loading dataclean.json. Make sure it exists.");
     console.error(error);
   }
 }
