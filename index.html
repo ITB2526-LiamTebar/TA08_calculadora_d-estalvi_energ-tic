@@ -4,7 +4,8 @@
 <head>
   <meta charset="UTF-8">
   <title>Energy Calculator</title>
-  <link rel="stylesheet" href="diseny.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
@@ -130,7 +131,7 @@ async function loadData() {
     document.getElementById("cleaningYear").textContent = "€" + cleaningTotal.toFixed(2);
 
   } catch (error) {
-    alert("Error loading dataclean.json. Make sure it exists.");
+    alert("Error loading dataclean.json");
     console.error(error);
   }
 }
