@@ -1,79 +1,111 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Smart Energy Dashboard</title>
+  <title>Smart Energy Dashboard Pro</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <link rel="stylesheet" href="diseny.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-
 <body>
 
 <div class="container">
-
-  <!-- LEFT -->
-  <div class="left">
-    <h1>⚡ Energy Dashboard</h1>
-    <p class="subtitle">Monitor consumption and efficiency</p>
-
-    <p><strong>Loaded file:</strong></p>
-    <p class="file">dataclean.json</p>
-
-    <button onclick="loadData()">Run Analysis</button>
-  </div>
-
-  <!-- RIGHT -->
-  <div class="right">
-
-    <div class="card">
-      <h2>⚡ Electric (Year)</h2>
-      <p id="electricYear">-</p>
-      <small id="recEnergy"></small>
+  <aside class="sidebar">
+    <div class="logo">
+      <h1>⚡ SmartDash</h1>
+      <p class="subtitle">v2.0 Enterprise</p>
     </div>
+    
+    <nav class="menu">
+      <p class="menu-label">Principal</p>
+      <ul>
+        <li class="active">📊 Resumen General</li>
+        <li>💧 Recursos</li>
+        <li>💸 Gastos</li>
+      </ul>
+    </nav>
 
-    <div class="card">
-      <h2>⚡ Electric (Period)</h2>
-      <p id="electricPeriod">-</p>
-      <small id="recEnergyPeriod"></small>
+    <div class="file-info">
+      <p><strong>Archivo:</strong></p>
+      <p class="file-name">dataclean.json</p>
+      <button class="btn-primary" onclick="loadData()">Actualizar Análisis</button>
     </div>
+  </aside>
 
-    <div class="card">
-      <h2>💧 Water (Year)</h2>
-      <p id="waterYear">-</p>
-      <small id="recWater"></small>
+  <main class="main-content">
+    <header class="top-bar">
+      <h2>Panel de Eficiencia Operativa</h2>
+      <div class="user-profile">Status: <span class="status-online">Online</span></div>
+    </header>
+
+    <div class="dashboard-grid">
+      <section class="kpi-group">
+        <div class="card kpi">
+          <div class="icon">⚡</div>
+          <div>
+            <h2>Electricidad (Año)</h2>
+            <p id="electricYear">-</p>
+            <small id="recEnergy"></small>
+          </div>
+        </div>
+        <div class="card kpi">
+          <div class="icon">💧</div>
+          <div>
+            <h2>Agua (Año)</h2>
+            <p id="waterYear">-</p>
+            <small id="recWater"></small>
+          </div>
+        </div>
+      </section>
+
+      <section class="kpi-group">
+        <div class="card kpi">
+          <div class="icon">📦</div>
+          <div>
+            <h2>Oficina</h2>
+            <p id="officeYear">-</p>
+            <small id="recOffice"></small>
+          </div>
+        </div>
+        <div class="card kpi">
+          <div class="icon">🧼</div>
+          <div>
+            <h2>Limpieza</h2>
+            <p id="cleaningYear">-</p>
+            <small id="recCleaning"></small>
+          </div>
+        </div>
+        <div class="card kpi">
+          <div class="icon">📱</div>
+          <div>
+            <h2>Telecom</h2>
+            <p id="telecomYear">-</p>
+          </div>
+        </div>
+        <div class="card kpi">
+          <div class="icon">🛠️</div>
+          <div>
+            <h2>Mantenimiento</h2>
+            <p id="maintenanceYear">-</p>
+          </div>
+        </div>
+      </section>
+
+      <div class="card chart-card large">
+        <h2>📊 Comparativa de Consumo Mensual</h2>
+        <div class="chart-container">
+          <canvas id="energyChart"></canvas>
+        </div>
+      </div>
+
+      <div class="card chart-card">
+        <h2>💰 Desglose de Gastos</h2>
+        <div class="chart-container">
+          <canvas id="expenseChart"></canvas>
+        </div>
+      </div>
     </div>
-
-    <div class="card">
-      <h2>💧 Water (Period)</h2>
-      <p id="waterPeriod">-</p>
-      <small id="recWaterPeriod"></small>
-    </div>
-
-    <div class="card">
-      <h2>📦 Office Supplies</h2>
-      <p id="officeYear">-</p>
-      <small id="recOffice"></small>
-    </div>
-
-    <div class="card">
-      <h2>🧼 Cleaning</h2>
-      <p id="cleaningYear">-</p>
-      <small id="recCleaning"></small>
-    </div>
-
-    <div class="card chart-card">
-      <h2>📊 Consumption Overview</h2>
-      <canvas id="energyChart"></canvas>
-    </div>
-
-    <div class="card chart-card">
-      <h2>📊 Expenses Distribution</h2>
-      <canvas id="expenseChart"></canvas>
-    </div>
-
-  </div>
+  </main>
 </div>
 
 <script>
@@ -84,103 +116,73 @@ async function loadData() {
   const data = await res.json();
   const docs = data.documents;
 
-  const totalEnergy = docs.filter(d => d.document_type === "energy_report")
-    .reduce((sum, e) => sum + (e.total_consumption_kwh || 0), 0);
+  // Filtrado de datos avanzado
+  const totalEnergy = docs.filter(d => d.document_type === "energy_report").reduce((sum, e) => sum + (e.total_consumption_kwh || 0), 0);
+  const totalWater = docs.filter(d => d.document_type === "water_consumption").reduce((sum, w) => sum + (w.average_consumption_liters || 0), 0);
+  const officeTotal = docs.filter(d => d.category === "office_supplies").reduce((sum, o) => sum + (o.total_amount || 0), 0);
+  const cleaningTotal = docs.filter(d => d.category === "cleaning").reduce((sum, c) => sum + (c.total_amount || 0), 0);
+  const telecomTotal = docs.filter(d => d.category === "telecommunications").reduce((sum, t) => sum + (t.total_amount || 0), 0);
+  const maintenanceTotal = docs.filter(d => d.category === "technical_services").reduce((sum, m) => sum + (m.total_amount || 0), 0);
 
-  const totalWater = docs.filter(d => d.document_type === "water_consumption")
-    .reduce((sum, w) => sum + (w.average_consumption_liters || 0), 0);
+  // Inyectar datos en el DOM
+  document.getElementById('electricYear').textContent = totalEnergy.toFixed(1) + " kWh";
+  document.getElementById('waterYear').textContent = totalWater + " L";
+  document.getElementById('officeYear').textContent = "€" + officeTotal.toFixed(2);
+  document.getElementById('cleaningYear').textContent = "€" + cleaningTotal.toFixed(2);
+  document.getElementById('telecomYear').textContent = "€" + telecomTotal.toFixed(2);
+  document.getElementById('maintenanceYear').textContent = "€" + maintenanceTotal.toFixed(2);
 
-  const officeTotal = docs.filter(d => d.category === "office_supplies")
-    .reduce((sum, o) => sum + (o.total_amount || 0), 0);
+  // Lógica de recomendaciones mejorada
+  document.getElementById('recEnergy').innerHTML = totalEnergy > 500 ? "🔴 <span style='color:#f87171'>Excedido</span>" : "🟢 <span style='color:#4ade80'>Eficiente</span>";
+  document.getElementById('recWater').innerHTML = totalWater > 1000 ? "🟠 <span style='color:#fbbf24'>Alto</span>" : "🟢 <span style='color:#4ade80'>Bajo</span>";
 
-  const cleaningTotal = docs.filter(d => d.category === "cleaning")
-    .reduce((sum, c) => sum + (c.total_amount || 0), 0);
-
-  // DISPLAY
-  electricYear.textContent = totalEnergy.toFixed(2) + " kWh";
-  electricPeriod.textContent = (totalEnergy / 2).toFixed(2) + " kWh";
-
-  waterYear.textContent = totalWater + " L";
-  waterPeriod.textContent = (totalWater / 2).toFixed(0) + " L";
-
-  officeYear.textContent = "€" + officeTotal.toFixed(2);
-  cleaningYear.textContent = "€" + cleaningTotal.toFixed(2);
-
-  // RECOMMENDATIONS
-  recEnergy.textContent = totalEnergy > 500
-    ? "⚠️ Reduce energy usage"
-    : "✅ Efficient energy use";
-
-  recEnergyPeriod.textContent = (totalEnergy/2) > 250
-    ? "⚠️ High short-term usage"
-    : "✅ Stable consumption";
-
-  recWater.textContent = totalWater > 1000
-    ? "⚠️ Reduce water usage"
-    : "✅ Efficient usage";
-
-  recWaterPeriod.textContent = (totalWater/2) > 500
-    ? "⚠️ Monitor short-term usage"
-    : "✅ Controlled usage";
-
-  recOffice.textContent = officeTotal > 1000
-    ? "⚠️ Reduce office expenses"
-    : "✅ Controlled spending";
-
-  recCleaning.textContent = cleaningTotal > 1000
-    ? "⚠️ Optimize cleaning costs"
-    : "✅ Efficient costs";
-
-  renderCharts(totalEnergy, totalWater, officeTotal, cleaningTotal);
+  renderCharts(totalEnergy, totalWater, officeTotal, cleaningTotal, telecomTotal, maintenanceTotal);
 }
 
-function renderCharts(energy, water, office, cleaning) {
-
+function renderCharts(energy, water, office, cleaning, telecom, maintenance) {
   if (energyChart) energyChart.destroy();
   if (expenseChart) expenseChart.destroy();
 
-  const energyCanvas = document.getElementById("energyChart");
-  const expenseCanvas = document.getElementById("expenseChart");
-
-  energyChart = new Chart(energyCanvas, {
+  const ctx1 = document.getElementById("energyChart").getContext("2d");
+  energyChart = new Chart(ctx1, {
     type: "bar",
     data: {
-      labels: ["Energy", "Water"],
+      labels: ["Energía (kWh)", "Agua (L)"],
       datasets: [{
+        label: 'Consumo Total',
         data: [energy, water],
-        backgroundColor: ["#22c55e", "#38bdf8"]
+        backgroundColor: ["#22c55e", "#38bdf8"],
+        borderRadius: 8
       }]
     },
     options: {
       responsive: true,
-      plugins: {
-        tooltip: { enabled: true }
-      },
-      onClick: (e, elements) => {
-        if (elements.length > 0) {
-          const i = elements[0].index;
-          alert(["Energy", "Water"][i]);
-        }
-      }
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } }
     }
   });
 
-  expenseChart = new Chart(expenseCanvas, {
+  const ctx2 = document.getElementById("expenseChart").getContext("2d");
+  expenseChart = new Chart(ctx2, {
     type: "doughnut",
     data: {
-      labels: ["Office", "Cleaning"],
+      labels: ["Oficina", "Limpieza", "Telecom", "Mant."],
       datasets: [{
-        data: [office, cleaning],
-        backgroundColor: ["#facc15", "#f472b6"]
+        data: [office, cleaning, telecom, maintenance],
+        backgroundColor: ["#facc15", "#f472b6", "#a855f7", "#64748b"],
+        borderWidth: 0
       }]
     },
     options: {
       responsive: true,
-      cutout: "60%"
+      maintainAspectRatio: false,
+      cutout: "75%"
     }
   });
 }
-</script>
 
+// Cargar al iniciar
+window.onload = loadData;
+</script>
 </body>
 </html>
