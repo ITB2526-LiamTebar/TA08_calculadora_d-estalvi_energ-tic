@@ -35,12 +35,39 @@
   <!-- RIGHT -->
   <div class="right">
 
-    <div class="card"><h2>⚡ Electric (Year)</h2><p id="electricYear">-</p></div>
-    <div class="card"><h2>⚡ Electric (Period)</h2><p id="electricPeriod">-</p></div>
-    <div class="card"><h2>💧 Water (Year)</h2><p id="waterYear">-</p></div>
-    <div class="card"><h2>💧 Water (Period)</h2><p id="waterPeriod">-</p></div>
-    <div class="card"><h2>📦 Office Supplies</h2><p id="officeYear">-</p></div>
-    <div class="card"><h2>🧼 Cleaning</h2><p id="cleaningYear">-</p></div>
+    <div class="card">
+      <h2>⚡ Electric (Year)</h2>
+      <p id="electricYear">-</p>
+      <small id="recEnergy"></small>
+    </div>
+
+    <div class="card">
+      <h2>⚡ Electric (Period)</h2>
+      <p id="electricPeriod">-</p>
+    </div>
+
+    <div class="card">
+      <h2>💧 Water (Year)</h2>
+      <p id="waterYear">-</p>
+      <small id="recWater"></small>
+    </div>
+
+    <div class="card">
+      <h2>💧 Water (Period)</h2>
+      <p id="waterPeriod">-</p>
+    </div>
+
+    <div class="card">
+      <h2>📦 Office Supplies</h2>
+      <p id="officeYear">-</p>
+      <small id="recOffice"></small>
+    </div>
+
+    <div class="card">
+      <h2>🧼 Cleaning</h2>
+      <p id="cleaningYear">-</p>
+      <small id="recCleaning"></small>
+    </div>
 
     <div class="card chart-card">
       <h2>Consumption Overview</h2>
@@ -79,6 +106,7 @@ async function loadData() {
     .filter(d => d.category === "cleaning")
     .reduce((sum, c) => sum + (c.total_amount || 0), 0);
 
+  // UI values
   document.getElementById("electricYear").textContent = totalEnergy.toFixed(2) + " kWh";
   document.getElementById("electricPeriod").textContent = (totalEnergy / 2).toFixed(2) + " kWh";
 
@@ -87,6 +115,36 @@ async function loadData() {
 
   document.getElementById("officeYear").textContent = "€" + officeTotal.toFixed(2);
   document.getElementById("cleaningYear").textContent = "€" + cleaningTotal.toFixed(2);
+
+  // 🔥 RECOMMENDATIONS
+
+  document.getElementById("recEnergy").textContent =
+    totalEnergy > 500
+      ? "⚠️ High consumption: optimize equipment and reduce idle usage."
+      : totalEnergy > 200
+      ? "⚡ Moderate usage: consider LED lighting and smart scheduling."
+      : "✅ Efficient energy use.";
+
+  document.getElementById("recWater").textContent =
+    totalWater > 1000
+      ? "⚠️ High water use: check leaks and install efficient taps."
+      : totalWater > 500
+      ? "💧 Moderate usage: monitor daily patterns."
+      : "✅ Good water efficiency.";
+
+  document.getElementById("recOffice").textContent =
+    officeTotal > 1000
+      ? "⚠️ High spending: move to digital workflows."
+      : officeTotal > 500
+      ? "📦 Moderate spending: optimize purchasing."
+      : "✅ Efficient office supply usage.";
+
+  document.getElementById("recCleaning").textContent =
+    cleaningTotal > 1000
+      ? "⚠️ High cost: consider eco bulk products."
+      : cleaningTotal > 500
+      ? "🧼 Moderate cost: review supplier efficiency."
+      : "✅ Cleaning costs are well optimized.";
 
   renderCharts(totalEnergy, totalWater, officeTotal, cleaningTotal);
 }
@@ -111,14 +169,8 @@ function renderCharts(energy, water, office, cleaning) {
       maintainAspectRatio: true,
       plugins: { legend: { display: false } },
       scales: {
-        x: {
-          ticks: { color: "#94a3b8" },
-          grid: { display: false }
-        },
-        y: {
-          ticks: { color: "#94a3b8" },
-          grid: { color: "rgba(255,255,255,0.05)" }
-        }
+        x: { ticks: { color: "#94a3b8" }, grid: { display: false } },
+        y: { ticks: { color: "#94a3b8" }, grid: { color: "rgba(255,255,255,0.05)" } }
       }
     }
   });
@@ -138,9 +190,7 @@ function renderCharts(energy, water, office, cleaning) {
       maintainAspectRatio: true,
       cutout: "60%",
       plugins: {
-        legend: {
-          labels: { color: "#cbd5f5" }
-        }
+        legend: { labels: { color: "#cbd5f5" } }
       }
     }
   });
