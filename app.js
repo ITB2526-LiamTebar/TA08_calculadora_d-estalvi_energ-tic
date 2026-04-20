@@ -9,27 +9,62 @@
 
 const JSON_URL = 'https://raw.githubusercontent.com/ITB2526-LiamTebar/TA08_calculadora_d-estalvi_energ-tic/refs/heads/main/dataclean.json';
 
-const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const FALLBACK_DATA = {"_comment":"The 4 key indicators selected: date, document_type, entity, total_amount","documents":[{"document_type":"material_invoice","date":"2024-04-30","due_date":"2024-05-31","entity":"Lyreco","total_amount":277.13,"vat":48.10,"taxable_base":229.03,"payment_method":"SEPA","category":"office_supplies"},{"document_type":"material_invoice","date":"2024-05-31","due_date":"2024-06-30","entity":"Lyreco","total_amount":261.24,"vat":45.34,"taxable_base":215.90,"payment_method":"SEPA","category":"office_supplies"},{"document_type":"material_invoice","date":"2024-06-30","due_date":"2024-07-31","entity":"Lyreco","total_amount":34.36,"vat":5.96,"taxable_base":28.40,"payment_method":"SEPA","category":"office_supplies"},{"document_type":"material_invoice","date":"2024-10-31","due_date":"2024-11-30","entity":"Lyreco","total_amount":198.56,"vat":34.46,"taxable_base":164.10,"payment_method":"SEPA","category":"office_supplies"},{"document_type":"service_invoice","date":"2024-05-23","entity":"Maintenance","total_amount":2548.02,"vat":442.22,"taxable_base":2105.80,"category":"technical_services"},{"document_type":"service_invoice","date":"2024-07-05","entity":"Maintenance","total_amount":348.48,"vat":60.48,"taxable_base":288.00,"category":"technical_services"},{"document_type":"service_invoice","date":"2024-09-13","entity":"Maintenance","total_amount":1012.98,"vat":175.81,"taxable_base":837.17,"category":"technical_services"},{"document_type":"cleaning_invoice","date":"2024-06-20","entity":"Neteges","total_amount":750.26,"vat":130.21,"taxable_base":620.05,"category":"cleaning"},{"document_type":"cleaning_invoice","date":"2024-05-27","entity":"Neteges","total_amount":454.72,"vat":78.92,"taxable_base":375.80,"category":"cleaning"},{"document_type":"telecom_invoice","date":"2024-03-04","entity":"O2","total_amount":50.00,"vat":8.67,"taxable_base":41.32,"category":"telecommunications"},{"document_type":"telecom_invoice","date":"2024-05","entity":"DIGI","total_amount":30.00,"vat":5.21,"taxable_base":24.79,"category":"telecommunications"},{"document_type":"water_consumption","date":"2024-02-25","entity":"Water","average_consumption_liters":200},{"document_type":"water_consumption","date":"2024-02-28","entity":"Water","average_consumption_liters":400},{"document_type":"water_consumption","date":"2024-02-29","entity":"Water","average_consumption_liters":450},{"document_type":"indicator","date":"2024-11-15","entity":"ASIXc1A","percentage":15.00},{"document_type":"indicator","date":"2025-01-20","entity":"ASIXc1C","percentage":68.75},{"document_type":"energy_report","date":"2025-01","entity":"ITB_Plant","total_production_kwh":72021.35,"total_consumption_kwh":165.55,"self_consumption_percentage":100,"revenue_eur":0.31}]};
+
+const MONTHS     = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONTHS_ES  = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 
 /** School calendar month indices (Sep–Jun, 0-indexed) */
 const SCHOOL_MONTHS = [0, 1, 2, 3, 4, 8, 9, 10, 11];
 
 /**
- * Seasonal weighting factors per indicator.
- * >1 = above-average consumption, <1 = below-average. Sum ≈ 12.
+ * Month type classification for chart bar colouring:
+ *   'holiday'  — school holiday periods (Christmas, Easter)
+ *   'break'    — summer break (no school)
+ *   'school'   — normal academic month
  */
+const MONTH_TYPE = [
+  'holiday',  // Jan  — Christmas spillover
+  'school',   // Feb
+  'school',   // Mar
+  'holiday',  // Apr  — Easter
+  'school',   // May
+  'school',   // Jun
+  'break',    // Jul  — summer
+  'break',    // Aug  — summer
+  'school',   // Sep
+  'school',   // Oct
+  'school',   // Nov
+  'holiday',  // Dec  — Christmas
+];
+
+const HOLIDAY_FACTORS = {
+  electricity:[0.85, 1.00, 1.00, 0.88, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 0.80],
+  water:      [0.85, 1.00, 1.00, 0.90, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 0.80],
+  supplies:   [0.80, 1.00, 1.00, 0.85, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 0.75],
+  cleaning:   [0.85, 1.00, 1.00, 0.88, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 0.80],
+};
+
 const SEASONAL = {
   electricity: [1.15, 1.10, 1.00, 0.90, 0.85, 0.70, 0.50, 0.45, 0.85, 1.00, 1.10, 1.20],
-  water:       [0.80, 0.80, 0.90, 1.00, 1.10, 1.30, 1.40, 1.30, 1.10, 0.90, 0.80, 0.75],
+  water:       [1.00, 1.00, 1.05, 1.00, 1.05, 0.90, 0.20, 0.20, 1.05, 1.10, 1.05, 1.00],
   supplies:    [1.10, 1.10, 1.00, 1.10, 1.05, 0.60, 0.20, 0.20, 1.20, 1.15, 1.10, 1.00],
   cleaning:    [1.05, 1.00, 1.00, 1.00, 1.00, 0.70, 0.40, 0.40, 1.10, 1.05, 1.00, 1.00]
+};
+
+// 3-year reduction plan targets per indicator (as fraction of baseline)
+const REDUCTION_PLAN = {
+  // [year1, year2, year3] as % reduction from baseline
+  electricity: [10, 20, 30],
+  water:       [15, 20, 25],
+  supplies:    [30, 35, 40],
+  cleaning:    [10, 15, 20],
 };
 
 // ─── State ───────────────────────────────────────────────────────────────────
 
 let DATA           = null;
 let chartInstance  = null;
-let chart2Instance = null;
 let isDark         = false;
 let activeTab      = 'calculations';
 
@@ -59,8 +94,8 @@ function toggleTheme() {
       Light mode`;
   }
 
-  if (chartInstance)  renderChart();
-  if (chart2Instance) renderBreakdownChart();
+  if (chartInstance) renderChart();
+  renderBreakdownChart();
 }
 
 // ─── Tab switching ────────────────────────────────────────────────────────────
@@ -68,20 +103,21 @@ function toggleTheme() {
 function switchTab(tab) {
   activeTab = tab;
 
-  // Update button states
   document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
 
-  // Show/hide panels
   document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.add('hidden'));
   document.getElementById('panel-' + tab).classList.remove('hidden');
 
-  // Re-render charts when switching to the charts tab (canvas needs to be visible)
   if (tab === 'charts' && DATA) {
     setTimeout(() => {
       renderChart();
       renderBreakdownChart();
     }, 50);
+  }
+
+  if (tab === 'reduction' && DATA) {
+    renderReductionSimulator();
   }
 }
 
@@ -94,38 +130,33 @@ function setStatus(type, text) {
 
 // ─── Data loading & parsing ──────────────────────────────────────────────────
 
-/**
- * Parses the raw document array from the GitHub JSON into
- * a normalised object with the 4 key annual indicators.
- */
 function parseDocuments(json) {
   const docs = json.documents || [];
 
   // ── Electricity ───────────────────────────────────────────────────────────
-  // Source: energy_report → total_production_kwh (1 month available → annualise)
-  const energyReports = docs.filter(d => d.document_type === 'energy_report');
-  const totalKwh = energyReports.reduce((sum, d) => sum + (d.total_production_kwh || 0), 0);
+  const energyReports  = docs.filter(d => d.document_type === 'energy_report');
+  const totalKwh       = energyReports.reduce((sum, d) => sum + (d.total_production_kwh || 0), 0);
   const electricity_kwh = energyReports.length > 0
     ? Math.round((totalKwh / energyReports.length) * 12)
     : 0;
 
+  // ── Solar production ──────────────────────────────────────────────────────
+  const solar_kwh = energyReports.reduce((sum, d) => sum + (d.total_production_kwh || 0), 0);
+
   // ── Water ─────────────────────────────────────────────────────────────────
-  // Source: water_consumption → average_consumption_liters (daily) → m³/year
-  const waterDocs = docs.filter(d => d.document_type === 'water_consumption');
+  const waterDocs       = docs.filter(d => d.document_type === 'water_consumption');
   const avgLitersPerDay = waterDocs.length > 0
     ? waterDocs.reduce((sum, d) => sum + (d.average_consumption_liters || 0), 0) / waterDocs.length
     : 0;
   const water_m3 = Math.round(avgLitersPerDay * 365 / 1000);
 
   // ── Office supplies ───────────────────────────────────────────────────────
-  // Source: invoices with category 'office_supplies' → extrapolate to 12 months
   const officeInvoices = docs.filter(d => d.category === 'office_supplies');
   const totalOffice    = officeInvoices.reduce((sum, d) => sum + (d.total_amount || 0), 0);
   const officeMonths   = uniqueMonths(officeInvoices);
   const supplies_eur   = Math.round((totalOffice / officeMonths) * 12);
 
   // ── Cleaning products ─────────────────────────────────────────────────────
-  // Source: invoices with category 'cleaning' → extrapolate to 12 months
   const cleaningInvoices = docs.filter(d => d.category === 'cleaning');
   const totalCleaning    = cleaningInvoices.reduce((sum, d) => sum + (d.total_amount || 0), 0);
   const cleaningMonths   = uniqueMonths(cleaningInvoices);
@@ -136,33 +167,53 @@ function parseDocuments(json) {
     water:        water_m3,
     supplies:     supplies_eur,
     cleaning:     cleaning_eur,
-    // Keep raw subsets for potential future use
+    solar_kwh,
     _energyReports: energyReports,
-    _waterDocs:   waterDocs,
+    _waterDocs:     waterDocs,
     _officeInvoices: officeInvoices,
     _cleaningInvoices: cleaningInvoices,
   };
 }
 
-/** Returns the count of distinct calendar months covered by a set of documents */
 function uniqueMonths(docs) {
   const set = new Set(docs.map(d => (d.date || '').slice(0, 7)));
   return set.size || 1;
 }
 
+function isSandboxed() {
+  try {
+    var h = window.location.hostname;
+    if (!h || h === '') return true;
+    if (/codepen\.io|jsfiddle\.net|stackblitz\.com|csb\.app|codesandbox\.io/.test(h)) return true;
+    if (window.self !== window.top) return true;
+  } catch(e) { return true; }
+  return false;
+}
+
 async function autoLoad() {
+  if (isSandboxed()) {
+    DATA = parseDocuments(FALLBACK_DATA);
+    setStatus('ok', 'Data loaded (bundled) — deploy to GitHub Pages for live sync');
+    renderAll();
+    return;
+  }
+
   setStatus('loading', 'Loading data from GitHub…');
   try {
-    const res = await fetch(JSON_URL);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const controller = new AbortController();
+    const timer = setTimeout(function() { controller.abort(); }, 5000);
+    const res = await fetch(JSON_URL, { signal: controller.signal });
+    clearTimeout(timer);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
     const json = await res.json();
     DATA = parseDocuments(json);
     setStatus('ok', 'Data loaded — dataclean.json · ITB2526-LiamTebar');
     renderAll();
   } catch (e) {
-    setStatus('error', `Failed to load data: ${e.message}`);
-    document.getElementById('errorSection').style.display = 'block';
-    document.getElementById('errorMsg').textContent = `Error: ${e.message}`;
+    console.warn('Fetch failed, using bundled fallback:', e.message);
+    DATA = parseDocuments(FALLBACK_DATA);
+    setStatus('ok', 'Loaded from bundled data — GitHub unreachable');
+    renderAll();
   }
 }
 
@@ -180,31 +231,20 @@ function getCostUnit(key) {
 
 // ─── Seasonal calculations ────────────────────────────────────────────────────
 
-/**
- * Distributes annual consumption into 12 monthly estimates using seasonal factors.
- * @param {string} key - Indicator key
- * @returns {number[]} Array of 12 monthly values
- */
 function seasonalMonthly(key) {
-  const annual  = getVal(key);
-  const factors = SEASONAL[key] || Array(12).fill(1);
-  const total   = factors.reduce((a, b) => a + b, 0);
-  return factors.map(f => Math.round((annual / total) * f * 10) / 10);
+  const annual   = getVal(key);
+  const seasonal = SEASONAL[key]  || Array(12).fill(1);
+  const holidays = HOLIDAY_FACTORS[key] || Array(12).fill(1);
+  const combined = seasonal.map((s, i) => s * holidays[i]);
+  const total    = combined.reduce((a, b) => a + b, 0);
+  return combined.map(f => Math.round((annual / total) * f * 10) / 10);
 }
 
-/**
- * Sums monthly values for a given set of month indices.
- * @param {string}   key    - Indicator key
- * @param {number[]} months - 0-indexed month indices
- */
 function sumMonths(key, months) {
   const monthly = seasonalMonthly(key);
   return months.reduce((acc, m) => acc + monthly[m], 0);
 }
 
-/**
- * Builds an array of month indices between from and to (handles year wrap).
- */
 function buildMonthRange(from, to) {
   const months = [];
   if (from <= to) {
@@ -223,7 +263,7 @@ function renderAll() {
   document.getElementById('mainContent').style.display  = 'block';
   renderMetrics();
   renderCalcs();
-  // Charts render on tab switch to avoid invisible canvas issues
+  renderReductionSimulator();
 }
 
 // ─── Metrics overview cards ───────────────────────────────────────────────────
@@ -233,16 +273,16 @@ function renderMetrics() {
   const water = getVal('water');
   const supp  = getVal('supplies');
   const clean = getVal('cleaning');
-  const co2   = Math.round(elec * 0.233);  // kg CO₂eq (avg Spain grid factor)
+  const co2   = Math.round(elec * 0.233);
   const academicElec = Math.round(sumMonths('electricity', SCHOOL_MONTHS));
 
   const cards = [
-    { label: 'Electricity',       value: elec.toLocaleString('en'),         unit: 'kWh / year'        },
-    { label: 'Water',             value: water.toLocaleString('en'),        unit: 'm³ / year'         },
-    { label: 'Office supplies',   value: supp.toLocaleString('en'),         unit: '€ / year'          },
-    { label: 'Cleaning',          value: clean.toLocaleString('en'),        unit: '€ / year'          },
-    { label: 'CO₂ equivalent',    value: co2.toLocaleString('en'),          unit: 'kg CO₂ eq.'        },
-    { label: 'Academic year',     value: academicElec.toLocaleString('en'), unit: 'kWh (Sep–Jun)'     },
+    { label: 'Electricity',     value: elec.toLocaleString('en'),         unit: 'kWh / year'    },
+    { label: 'Water',           value: water.toLocaleString('en'),        unit: 'm³ / year'     },
+    { label: 'Office supplies', value: supp.toLocaleString('en'),         unit: '€ / year'      },
+    { label: 'Cleaning',        value: clean.toLocaleString('en'),        unit: '€ / year'      },
+    { label: 'CO₂ equivalent',  value: co2.toLocaleString('en'),          unit: 'kg CO₂ eq.'    },
+    { label: 'Academic year',   value: academicElec.toLocaleString('en'), unit: 'kWh (Sep–Jun)' },
   ];
 
   document.getElementById('metricsGrid').innerHTML = cards.map(c => `
@@ -310,7 +350,7 @@ function getCalcDefinitions() {
     {
       id: 'c3',
       title: 'Water — next year',
-      desc: 'Annual water projection with summer peaks and adjustable trend.',
+      desc: 'Annual water projection with school-cycle patterns and adjustable trend.',
       inputs: `
         <div class="input-row">
           <label>Change</label>
@@ -469,19 +509,25 @@ function renderChart() {
   const key  = document.getElementById('chartIndicator')?.value || 'electricity';
   const data = seasonalMonthly(key);
 
-  const activeColor   = isDark ? '#4db87a' : '#1a5c3a';
-  const inactiveColor = isDark ? '#3a3a35' : '#d4d2cc';
-  const tickColor     = isDark ? '#6b6a65' : '#9b9a95';
-  const gridColor     = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)';
-
-  const bgColors = data.map((_, i) =>
-    SCHOOL_MONTHS.includes(i) ? activeColor : inactiveColor
-  );
+  const COLOR = {
+    school:  isDark ? '#4db87a' : '#1a5c3a',
+    holiday: isDark ? '#e07840' : '#b85c1a',
+    break:   isDark ? '#3a3a35' : '#d4d2cc',
+  };
+  const tickColor = isDark ? '#6b6a65' : '#9b9a95';
+  const gridColor = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)';
+  const bgColors  = MONTH_TYPE.map(t => COLOR[t]);
 
   if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
 
   const ctx = document.getElementById('monthlyChart')?.getContext('2d');
   if (!ctx) return;
+
+  const LABELS = {
+    school:  'Academic month',
+    holiday: 'Holiday period (Christmas / Easter)',
+    break:   'Summer break',
+  };
 
   chartInstance = new Chart(ctx, {
     type: 'bar',
@@ -503,8 +549,8 @@ function renderChart() {
         tooltip: {
           callbacks: {
             label: ctx => {
-              const school = SCHOOL_MONTHS.includes(ctx.dataIndex);
-              return ` ${ctx.parsed.y.toFixed(1)} — ${school ? 'academic' : 'summer break'}`;
+              const type = MONTH_TYPE[ctx.dataIndex];
+              return ` ${ctx.parsed.y.toFixed(1)} — ${LABELS[type]}`;
             }
           }
         }
@@ -512,8 +558,8 @@ function renderChart() {
       scales: {
         x: {
           ticks: { color: tickColor, font: { size: 11 }, autoSkip: false },
-          grid:   { display: false },
-          border: { display: false }
+          grid:  { display: false },
+          border:{ display: false }
         },
         y: {
           ticks: { color: tickColor, font: { size: 11 } },
@@ -523,72 +569,194 @@ function renderChart() {
       }
     }
   });
+
+  updateChartLegend();
+}
+
+function updateChartLegend() {
+  var legendEl = document.getElementById('chartLegend');
+  if (!legendEl) return;
+  var items = [
+    { color: isDark ? '#4db87a' : '#1a5c3a', label: 'Academic month'  },
+    { color: isDark ? '#e07840' : '#b85c1a', label: 'Holiday period'   },
+    { color: isDark ? '#3a3a35' : '#d4d2cc', label: 'Summer break'     },
+  ];
+  legendEl.innerHTML = items.map(function(it) {
+    return '<span class="legend-item"><span class="legend-dot" style="background:' + it.color + '"></span>' + it.label + '</span>';
+  }).join('');
 }
 
 function renderBreakdownChart() {
-  if (chart2Instance) { chart2Instance.destroy(); chart2Instance = null; }
+  var barsEl  = document.getElementById('breakdownBars');
+  var totalEl = document.getElementById('breakdownTotal');
+  if (!barsEl) return;
 
-  const ctx = document.getElementById('breakdownChart')?.getContext('2d');
-  if (!ctx) return;
+  var elec  = getVal('electricity');
+  var water = getVal('water');
+  var supp  = getVal('supplies');
+  var clean = getVal('cleaning');
+
+  var elecCost  = Math.round(elec  * (getCostUnit('electricity') || 0.18));
+  var waterCost = Math.round(water * (getCostUnit('water')       || 2.45));
+  var grandTotal = elecCost + waterCost + supp + clean;
+
+  var items = [
+    { label: 'Electricity',     value: elecCost,  raw: elec,  rawUnit: 'kWh', color: isDark ? '#4db87a' : '#1a5c3a' },
+    { label: 'Water',           value: waterCost, raw: water, rawUnit: 'm³',  color: isDark ? '#4a9fd4' : '#1a6a9a' },
+    { label: 'Office supplies', value: supp,      raw: null,  rawUnit: '',    color: isDark ? '#9a70e0' : '#5a3ab0' },
+    { label: 'Cleaning',        value: clean,     raw: null,  rawUnit: '',    color: isDark ? '#e07840' : '#b07c10' },
+  ];
+
+  barsEl.innerHTML = items.map(function(item) {
+    var pct    = grandTotal > 0 ? Math.round(item.value / grandTotal * 100) : 0;
+    var barPct = grandTotal > 0 ? (item.value / grandTotal * 100) : 0;
+    var subtext = item.raw !== null
+      ? item.raw.toLocaleString('en') + ' ' + item.rawUnit + ' &nbsp;·&nbsp; €' + item.value.toLocaleString('en')
+      : '€' + item.value.toLocaleString('en');
+
+    return '<div class="bd-row">'
+      + '<div class="bd-label">' + item.label + '</div>'
+      + '<div class="bd-bar-wrap">'
+      +   '<div class="bd-bar" style="width:' + barPct.toFixed(1) + '%;background:' + item.color + '"></div>'
+      + '</div>'
+      + '<div class="bd-right">'
+      +   '<span class="bd-pct">' + pct + '%</span>'
+      +   '<span class="bd-sub">' + subtext + '</span>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+
+  if (totalEl) {
+    totalEl.innerHTML = 'Estimated annual total&ensp;<strong>€' + grandTotal.toLocaleString('en') + '</strong>';
+  }
+}
+
+// ─── Reduction Simulator (3-year −30% plan) ───────────────────────────────────
+
+function renderReductionSimulator() {
+  const container = document.getElementById('reductionContent');
+  if (!container || !DATA) return;
 
   const elec  = getVal('electricity');
   const water = getVal('water');
   const supp  = getVal('supplies');
   const clean = getVal('cleaning');
 
-  const elecCost  = Math.round(elec  * (getCostUnit('electricity') || 0.18));
-  const waterCost = Math.round(water * (getCostUnit('water')       || 2.45));
+  const elecCost  = Math.round(elec  * 0.18);
+  const waterCost = Math.round(water * 2.45);
+  const baseTotalCost = elecCost + waterCost + supp + clean;
+  const baseCO2 = Math.round(elec * 0.233);
 
-  const values = [elecCost, waterCost, supp, clean];
-  const labels = ['Electricity', 'Water', 'Office supplies', 'Cleaning'];
-  const colors = isDark
-    ? ['#4db87a', '#4a9fd4', '#9a70e0', '#e07840']
-    : ['#1a5c3a', '#1a6a9a', '#5a3ab0', '#b07c10'];
+  // Build year rows
+  const indicators = [
+    { key: 'electricity', label: 'Electricity', base: elec,  unit: 'kWh', hasCost: true, costPer: 0.18 },
+    { key: 'water',       label: 'Water',       base: water, unit: 'm³',  hasCost: true, costPer: 2.45 },
+    { key: 'supplies',    label: 'Office supplies', base: supp,  unit: '€', hasCost: false },
+    { key: 'cleaning',    label: 'Cleaning',    base: clean, unit: '€', hasCost: false },
+  ];
 
-  chart2Instance = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels,
-      datasets: [{
-        data: values,
-        backgroundColor: colors,
-        borderWidth: 0,
-        hoverOffset: 6
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      cutout: '60%',
-      plugins: {
-        legend: {
-          display: true,
-          position: 'right',
-          labels: {
-            color: isDark ? '#9b9a95' : '#6b6a65',
-            font: { size: 12, family: "'DM Sans', sans-serif" },
-            boxWidth: 10,
-            padding: 14,
-            generateLabels(chart) {
-              const ds   = chart.data.datasets[0];
-              const total = ds.data.reduce((a, b) => a + b, 0);
-              return chart.data.labels.map((label, i) => ({
-                text: `${label}  €${ds.data[i].toLocaleString('en')}  (${Math.round(ds.data[i]/total*100)}%)`,
-                fillStyle: ds.backgroundColor[i],
-                strokeStyle: 'transparent',
-                index: i
-              }));
-            }
-          }
-        },
-        tooltip: {
-          callbacks: {
-            label: ctx => ` €${ctx.parsed.toLocaleString('en')}`
-          }
-        }
-      }
-    }
-  });
+  function yearData(yearIdx) {
+    return indicators.map(ind => {
+      const pct = REDUCTION_PLAN[ind.key][yearIdx];
+      const val = Math.round(ind.base * (1 - pct / 100) * 10) / 10;
+      const cost = ind.hasCost ? Math.round(val * ind.costPer) : val;
+      const saving = ind.hasCost
+        ? Math.round(ind.base * ind.costPer) - cost
+        : Math.round(ind.base) - val;
+      return { ...ind, pct, val, cost, saving };
+    });
+  }
+
+  const year1 = yearData(0);
+  const year2 = yearData(1);
+  const year3 = yearData(2);
+
+  function totalCost(yd) {
+    return yd.reduce((s, d) => s + d.cost, 0);
+  }
+  function totalSaving(yd) {
+    return baseTotalCost - totalCost(yd);
+  }
+
+  const co2Year3 = Math.round(elec * (1 - REDUCTION_PLAN.electricity[2] / 100) * 0.233);
+
+  container.innerHTML = `
+    <div class="section-label">Baseline (current data)</div>
+    <div class="reduction-baseline">
+      <div class="rb-item">
+        <span class="rb-label">Electricity</span>
+        <span class="rb-val">${elec.toLocaleString('en')} kWh</span>
+        <span class="rb-cost">€${elecCost.toLocaleString('en')}/yr</span>
+      </div>
+      <div class="rb-item">
+        <span class="rb-label">Water</span>
+        <span class="rb-val">${water.toLocaleString('en')} m³</span>
+        <span class="rb-cost">€${waterCost.toLocaleString('en')}/yr</span>
+      </div>
+      <div class="rb-item">
+        <span class="rb-label">Office supplies</span>
+        <span class="rb-val">€${supp.toLocaleString('en')}</span>
+        <span class="rb-cost">direct cost</span>
+      </div>
+      <div class="rb-item">
+        <span class="rb-label">Cleaning</span>
+        <span class="rb-val">€${clean.toLocaleString('en')}</span>
+        <span class="rb-cost">direct cost</span>
+      </div>
+      <div class="rb-item rb-total">
+        <span class="rb-label">Total annual cost</span>
+        <span class="rb-val">€${baseTotalCost.toLocaleString('en')}</span>
+        <span class="rb-cost">${baseCO2.toLocaleString('en')} kg CO₂</span>
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-top:28px">Projected values after applying each year's actions</div>
+    <div class="reduction-years">
+      ${[year1, year2, year3].map((yd, yi) => `
+        <div class="ry-card">
+          <div class="ry-header">
+            <span class="ry-year">Year ${yi + 1}</span>
+            <span class="ry-target">−${[10,20,30][yi]}% target</span>
+          </div>
+          <div class="ry-rows">
+            ${yd.map(d => `
+              <div class="ry-row">
+                <span class="ry-label">${d.label}</span>
+                <span class="ry-val">${d.val.toLocaleString('en')} ${d.unit}</span>
+                <span class="ry-saving">−${d.pct}%</span>
+              </div>`).join('')}
+          </div>
+          <div class="ry-footer">
+            <div class="ry-cost">€${totalCost(yd).toLocaleString('en')} / year</div>
+            <div class="ry-save">Saving: <strong>€${totalSaving(yd).toLocaleString('en')}</strong></div>
+          </div>
+        </div>`).join('')}
+    </div>
+
+    <div class="section-label" style="margin-top:28px">3-year impact summary</div>
+    <div class="reduction-summary">
+      <div class="rs-item">
+        <div class="rs-icon">💶</div>
+        <div class="rs-label">Total savings over 3 years</div>
+        <div class="rs-val">€${(totalSaving(year1) + totalSaving(year2) + totalSaving(year3)).toLocaleString('en')}</div>
+      </div>
+      <div class="rs-item">
+        <div class="rs-icon">⚡</div>
+        <div class="rs-label">Electricity saved (Year 3)</div>
+        <div class="rs-val">${Math.round(elec * 0.30).toLocaleString('en')} kWh</div>
+      </div>
+      <div class="rs-item">
+        <div class="rs-icon">🌿</div>
+        <div class="rs-label">CO₂ avoided (Year 3)</div>
+        <div class="rs-val">${(baseCO2 - co2Year3).toLocaleString('en')} kg</div>
+      </div>
+      <div class="rs-item">
+        <div class="rs-icon">💧</div>
+        <div class="rs-label">Water saved (Year 3)</div>
+        <div class="rs-val">${Math.round(water * 0.25).toLocaleString('en')} m³</div>
+      </div>
+    </div>
+  `;
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
