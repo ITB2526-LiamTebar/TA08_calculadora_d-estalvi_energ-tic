@@ -83,6 +83,7 @@ function toggleTheme() {
   }
   if (chartInstance) renderChart();
   renderBreakdownChart();
+  renderReductionChart();
 }
 
 // ─── Tabs ─────────────────────────────────────────────────────────────────────
@@ -94,6 +95,7 @@ function switchTab(tab) {
   document.getElementById('panel-' + tab).classList.remove('hidden');
   if (tab === 'charts' && DATA) setTimeout(() => { renderChart(); renderBreakdownChart(); }, 50);
   if (tab === 'calcs' && DATA) updateCalcResults();
+  if (tab === 'cronograma' && DATA) setTimeout(() => renderReductionChart(), 50);
 }
 
 // ─── Status ───────────────────────────────────────────────────────────────────
@@ -561,6 +563,153 @@ function renderBreakdownChart() {
   }).join('');
 
   if (totalEl) totalEl.innerHTML = `Cost anual estimat total&ensp;<strong>€${grandTotal.toLocaleString('ca')}</strong>`;
+}
+
+// ─── Reduction trend chart (36 months) ───────────────────────────────────────
+
+let reductionChartInstance = null;
+
+function renderReductionChart() {
+  const ctx = document.getElementById('reductionChart')?.getContext('2d');
+  if (!ctx) return;
+
+  // Calculate base annual cost (same logic as renderSimResults)
+  const baseCost =
+    Math.round(getVal('electricity') * 0.18) +
+    Math.round(getVal('water')       * 2.45) +
+    Math.round(getVal('supplies'))           +
+    Math.round(getVal('cleaning'));
+
+  if (baseCost === 0) return;
+
+  // Measures grouped by year they activate (1-indexed)
+  // Each measure reduces the remaining cost multiplicatively
+  // We model a smooth monthly ramp: measures activate progressively within their year
+  const measuresByYear = { 1:[], 2:[], 3:[] };
+  Object.values(MEASURES).forEach(list =>
+    list.forEach(m => measuresByYear[m.year]?.push(m.pct / 100))
+  );
+
+  // For each month 1..36, compute cumulative cost factor
+  // Measures in year N start taking effect at month (N-1)*12 + 1
+  // and ramp in linearly over 3 months to feel organic
+  function costFactorAt(month) {
+    let factor = 1.0;
+    [1, 2, 3].forEach(yr => {
+      const startMonth = (yr - 1) * 12 + 1;
+      const rampDuration = yr === 1 ? 10 : 8;
+      measuresByYear[yr].forEach(pct => {
+        const progress = Math.min(1, Math.max(0, (month - startMonth + 1) / rampDuration));
+        factor *= (1 - pct * progress);
+      });
+    });
+    return factor;
+  }
+
+  const labels = [];
+  const dataActual = [];
+  const dataTarget = [];
+
+  for (let m = 0; m <= 36; m++) {
+    if (m === 0) {
+      labels.push('Inici');
+    } else {
+      const yr  = Math.ceil(m / 12);
+      const mo  = ((m - 1) % 12) + 1;
+      const monthNames = ['Gen','Feb','Mar','Abr','Mai','Jun','Jul','Ago','Set','Oct','Nov','Des'];
+      labels.push(mo === 1 ? `Any ${yr}` : (mo === 7 ? monthNames[m % 12 === 0 ? 11 : (m % 12) - 1] : ''));
+    }
+    const monthly = (baseCost / 12) * costFactorAt(m);
+    dataActual.push(Math.round(monthly));
+    // linear target line: from baseCost/12 down to 70% at month 36
+    dataTarget.push(Math.round((baseCost / 12) * (1 - (0.30 * m / 36))));
+  }
+
+  const accentColor  = isDark ? '#4db87a' : '#1a5c3a';
+  const targetColor  = isDark ? '#e07840' : '#b85c1a';
+  const gridColor    = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)';
+  const tickColor    = isDark ? '#6b6a65' : '#9b9a95';
+
+  if (reductionChartInstance) { reductionChartInstance.destroy(); reductionChartInstance = null; }
+
+  reductionChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Cost mensual projectat',
+          data: dataActual,
+          borderColor: accentColor,
+          backgroundColor: isDark ? 'rgba(77,184,122,0.10)' : 'rgba(26,92,58,0.08)',
+          borderWidth: 2.5,
+          pointRadius: (ctx) => [0, 12, 24, 36].includes(ctx.dataIndex) ? 5 : 0,
+          pointBackgroundColor: accentColor,
+          fill: true,
+          tension: 0.45,
+        },
+        {
+          label: 'Objectiu lineal −30%',
+          data: dataTarget,
+          borderColor: targetColor,
+          borderWidth: 1.5,
+          borderDash: [5, 4],
+          pointRadius: 0,
+          fill: false,
+          tension: 0,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (c) => ` ${c.dataset.label}: €${c.parsed.y.toLocaleString('ca')}/mes`,
+          }
+        },
+        annotation: undefined,
+      },
+      scales: {
+        x: {
+          ticks: {
+            color: tickColor,
+            font: { size: 10 },
+            maxRotation: 0,
+            autoSkip: false,
+            callback: (val, i) => labels[i] || '',
+          },
+          grid: { display: false },
+          border: { display: false },
+        },
+        y: {
+          ticks: {
+            color: tickColor,
+            font: { size: 11 },
+            callback: (v) => '€' + v.toLocaleString('ca'),
+          },
+          grid: { color: gridColor },
+          border: { display: false },
+        }
+      }
+    }
+  });
+
+  // Legend
+  const legendEl = document.getElementById('reductionLegend');
+  if (legendEl) {
+    legendEl.innerHTML = [
+      { color: accentColor, label: 'Cost mensual amb mesures aplicades' },
+      { color: targetColor, dashed: true, label: 'Objectiu lineal −30% a 3 anys' },
+    ].map(it => `
+      <span class="legend-item">
+        <span class="legend-dot" style="background:${it.color};${it.dashed?'opacity:.6':''}"></span>
+        ${it.label}
+      </span>`).join('');
+  }
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
