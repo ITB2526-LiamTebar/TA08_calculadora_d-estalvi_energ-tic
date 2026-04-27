@@ -11,7 +11,305 @@ const JSON_URL = 'https://raw.githubusercontent.com/ITB2526-LiamTebar/TA08_calcu
 
 const FALLBACK_DATA = {"_comment":"The 4 key indicators selected: date, document_type, entity, total_amount","documents":[{"document_type":"material_invoice","date":"2024-04-30","due_date":"2024-05-31","entity":"Lyreco","total_amount":277.13,"vat":48.10,"taxable_base":229.03,"payment_method":"SEPA","category":"office_supplies"},{"document_type":"material_invoice","date":"2024-05-31","due_date":"2024-06-30","entity":"Lyreco","total_amount":261.24,"vat":45.34,"taxable_base":215.90,"payment_method":"SEPA","category":"office_supplies"},{"document_type":"material_invoice","date":"2024-06-30","due_date":"2024-07-31","entity":"Lyreco","total_amount":34.36,"vat":5.96,"taxable_base":28.40,"payment_method":"SEPA","category":"office_supplies"},{"document_type":"material_invoice","date":"2024-10-31","due_date":"2024-11-30","entity":"Lyreco","total_amount":198.56,"vat":34.46,"taxable_base":164.10,"payment_method":"SEPA","category":"office_supplies"},{"document_type":"service_invoice","date":"2024-05-23","entity":"Maintenance","total_amount":2548.02,"vat":442.22,"taxable_base":2105.80,"category":"technical_services"},{"document_type":"service_invoice","date":"2024-07-05","entity":"Maintenance","total_amount":348.48,"vat":60.48,"taxable_base":288.00,"category":"technical_services"},{"document_type":"service_invoice","date":"2024-09-13","entity":"Maintenance","total_amount":1012.98,"vat":175.81,"taxable_base":837.17,"category":"technical_services"},{"document_type":"cleaning_invoice","date":"2024-06-20","entity":"Neteges","total_amount":750.26,"vat":130.21,"taxable_base":620.05,"category":"cleaning"},{"document_type":"cleaning_invoice","date":"2024-05-27","entity":"Neteges","total_amount":454.72,"vat":78.92,"taxable_base":375.80,"category":"cleaning"},{"document_type":"telecom_invoice","date":"2024-03-04","entity":"O2","total_amount":50.00,"vat":8.67,"taxable_base":41.32,"category":"telecommunications"},{"document_type":"telecom_invoice","date":"2024-05","entity":"DIGI","total_amount":30.00,"vat":5.21,"taxable_base":24.79,"category":"telecommunications"},{"document_type":"water_consumption","date":"2024-02-25","entity":"Water","average_consumption_liters":200},{"document_type":"water_consumption","date":"2024-02-28","entity":"Water","average_consumption_liters":400},{"document_type":"water_consumption","date":"2024-02-29","entity":"Water","average_consumption_liters":450},{"document_type":"indicator","date":"2024-11-15","entity":"ASIXc1A","percentage":15.00},{"document_type":"indicator","date":"2025-01-20","entity":"ASIXc1C","percentage":68.75},{"document_type":"energy_report","date":"2025-01","entity":"ITB_Plant","total_production_kwh":72021.35,"total_consumption_kwh":165.55,"self_consumption_percentage":100,"revenue_eur":0.31}]};
 
-const MONTHS      = ['Gen','Feb','Mar','Abr','Mai','Jun','Jul','Ago','Set','Oct','Nov','Des'];
+// ─── i18n ─────────────────────────────────────────────────────────────────────
+
+let currentLang = 'en';
+
+const TRANSLATIONS = {
+  en: {
+    // Status
+    loading_github:     'Loading data from GitHub…',
+    data_loaded:        'Data loaded — dataclean.json · ITB2526-LiamTebar',
+    data_bundled:       'Data loaded (bundled)',
+    data_fallback:      'Loaded from bundled data — GitHub unreachable',
+    // Top bar
+    theme_light:        'Light mode',
+    theme_dark:         'Dark mode',
+    // Tabs
+    overview:           'Overview',
+    tab_simulator:      'Simulator',
+    tab_charts:         'Charts',
+    tab_calcs:          'Calculations',
+    tab_timeline:       'Timeline',
+    // Charts panel
+    monthly_consumption:'Estimated monthly consumption',
+    indicator_label:    'Indicator:',
+    opt_electricity:    'Electricity (kWh)',
+    opt_water:          'Water (m³)',
+    opt_supplies:       'Supplies (€)',
+    opt_cleaning:       'Cleaning (€)',
+    legend_school:      'School month',
+    legend_holiday:     'Holidays',
+    legend_summer:      'Summer',
+    annual_breakdown:   'Annual breakdown by category',
+    // Calcs panel
+    calcs_by_period:    'Calculations by period',
+    calc_result_label:  'Result',
+    // Simulator
+    reduction_measures: 'Applicable reduction measures',
+    realtime_results:   'Real-time results',
+    no_changes:         'no changes',
+    annual_cost:        'Total annual cost',
+    savings_label:      (pct, eur) => `−${pct}% · savings €${eur}`,
+    // Timeline panel
+    cost_evolution:     'Cost evolution — 36 months',
+    reduction_plan:     '3-year reduction plan — target −30%',
+    cumulative_target:  'Cumulative reduction target',
+    year1_tag:          'Year 1 · 2025–2026',
+    year1_title:        'Awareness and quick wins',
+    year2_tag:          'Year 2 · 2026–2027',
+    year2_title:        'Infrastructure improvements',
+    year3_tag:          'Year 3 · 2027–2028',
+    year3_title:        'Circular economy and review',
+    mg_energy:          '⚡ Energy',
+    mg_water:           '💧 Water',
+    mg_supplies:        '📄 Supplies',
+    mg_cleaning:        '🧹 Cleaning',
+    kpi_total:          'Total cost',
+    kpi_elec:           'Electricity',
+    kpi_water:          'Water',
+    kpi_supplies:       'Supplies',
+    sdg_alignment:      'SDG Alignment',
+    sdg4:               'Quality education — green coding in the curriculum',
+    sdg6:               'Clean water — consumption reduction and rainwater harvesting',
+    sdg7:               'Clean energy — LED, virtualisation, smart metering',
+    sdg12:              'Responsible production — circular WEEE, recycled paper',
+    sdg13:              'Climate action — CO₂ reduction, annual ESG audit',
+    sdg17:              'Partnerships — collaboration between departments and manufacturers',
+    // Months
+    months:             ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+    // Chart legends
+    chart_school:       'School month',
+    chart_holiday:      'Holidays',
+    chart_summer:       'Summer',
+    // Reduction chart
+    rc_projected:       'Projected monthly cost',
+    rc_target:          'Linear target −30%',
+    rc_legend1:         'Monthly cost with applied measures',
+    rc_legend2:         'Linear −30% target over 3 years',
+    // Breakdown
+    bd_total_label:     'Estimated total annual cost',
+    // Metrics
+    m_electricity:      'Electricity',
+    m_water:            'Water',
+    m_supplies:         'Office supplies',
+    m_cleaning:         'Cleaning',
+    m_co2:              'CO₂ equivalent',
+    m_academic:         'Academic year',
+    m_unit_kwh:         'kWh / year',
+    m_unit_m3:          'm³ / year',
+    m_unit_eur:         '€ / year',
+    m_unit_co2:         'kg CO₂ eq.',
+    m_unit_acad:        'kWh (Sep–Jun)',
+    // CAT labels
+    cat_electricity:    'Energy',
+    cat_water:          'Water',
+    cat_supplies:       'Supplies',
+    cat_cleaning:       'Cleaning',
+    // MEASURES labels
+    measures: {
+      electricity: [
+        'Proxmox virtualisation',
+        'Nightly auto-shutdown scripts',
+        'Progressive 3-year LED upgrade',
+        'Recondition old servers',
+      ],
+      water: [
+        'Tap aerators and diffusers',
+        'Detected leak repairs',
+        'Rainwater harvesting',
+        'Push-button replacement plan',
+      ],
+      supplies: [
+        'Digitisation of exams',
+        'Print quota system',
+        '100% recycled paper purchasing',
+        'Return toner cartridges to manufacturer',
+      ],
+      cleaning: [
+        'Bulk buying and container refills',
+        'Switch to eco-concentrate products',
+        'Reusable microfibre cloths',
+        'Automatic dosing system',
+      ],
+    },
+    // Calc titles & descs
+    calcs: [
+      { title:'Electricity — next year',       desc:'Annual projection with adjustable trend.', from_label:'From', to_label:'to', var_label:'Variation', est_cost:'Estimated cost' },
+      { title:'Electricity — custom period',   desc:'Estimated consumption between two selected months.', from_label:'From', to_label:'to', months_label:(n)=>`${n} month(s)` },
+      { title:'Water — next year',             desc:'Annual projection with school and seasonal cycle.', var_label:'Variation', est_cost:'Estimated cost' },
+      { title:'Water — custom period',         desc:'Estimated consumption for a month range.', from_label:'From', to_label:'to', months_label:(n)=>`${n} month(s)` },
+      { title:'Supplies — next year',          desc:'Projected expenditure on consumables.', var_label:'Variation', vs_base:'vs base' },
+      { title:'Supplies — school year',        desc:'Estimated expenditure from September to June.', of_total:'% of annual total' },
+      { title:'Cleaning — next year',          desc:'Projected expenditure on cleaning products.', var_label:'Variation', vs_base:'vs base' },
+      { title:'Cleaning — custom period',      desc:'Estimated cleaning expenditure for a month range.', from_label:'From', to_label:'to', months_label:(n)=>`${n} month(s)` },
+    ],
+    // Timeline start label
+    tl_start: 'Start',
+    // Error section
+    err_load:      'Could not load data.',
+    err_sub:       'Check your connection or that the repository is public.',
+    err_retry:     'Retry',
+  },
+  es: {
+    loading_github:     'Cargando datos desde GitHub…',
+    data_loaded:        'Datos cargados — dataclean.json · ITB2526-LiamTebar',
+    data_bundled:       'Datos cargados (integrados)',
+    data_fallback:      'Cargado desde datos integrados — GitHub no accesible',
+    theme_light:        'Modo claro',
+    theme_dark:         'Modo oscuro',
+    overview:           'Resumen',
+    tab_simulator:      'Simulador',
+    tab_charts:         'Gráficos',
+    tab_calcs:          'Cálculos',
+    tab_timeline:       'Cronograma',
+    monthly_consumption:'Consumo mensual estimado',
+    indicator_label:    'Indicador:',
+    opt_electricity:    'Electricidad (kWh)',
+    opt_water:          'Agua (m³)',
+    opt_supplies:       'Consumibles (€)',
+    opt_cleaning:       'Limpieza (€)',
+    legend_school:      'Mes lectivo',
+    legend_holiday:     'Vacaciones',
+    legend_summer:      'Verano',
+    annual_breakdown:   'Desglose anual por categoría',
+    calcs_by_period:    'Cálculos por periodo',
+    calc_result_label:  'Resultado',
+    reduction_measures: 'Medidas de reducción aplicables',
+    realtime_results:   'Resultados en tiempo real',
+    no_changes:         'sin cambios',
+    annual_cost:        'Coste anual total',
+    savings_label:      (pct, eur) => `−${pct}% · ahorro €${eur}`,
+    cost_evolution:     'Evolución del coste — 36 meses',
+    reduction_plan:     'Plan de reducción a 3 años — objetivo −30%',
+    cumulative_target:  'Objetivo de reducción acumulado',
+    year1_tag:          'Año 1 · 2025–2026',
+    year1_title:        'Concienciación y ganancias rápidas',
+    year2_tag:          'Año 2 · 2026–2027',
+    year2_title:        'Mejoras de infraestructura',
+    year3_tag:          'Año 3 · 2027–2028',
+    year3_title:        'Economía circular y revisión',
+    mg_energy:          '⚡ Energía',
+    mg_water:           '💧 Agua',
+    mg_supplies:        '📄 Consumibles',
+    mg_cleaning:        '🧹 Limpieza',
+    kpi_total:          'Coste total',
+    kpi_elec:           'Electricidad',
+    kpi_water:          'Agua',
+    kpi_supplies:       'Consumibles',
+    sdg_alignment:      'Alineación con los ODS',
+    sdg4:               'Educación de calidad — green coding en el currículo',
+    sdg6:               'Agua limpia — reducción del consumo y aprovechamiento pluvial',
+    sdg7:               'Energía limpia — LED, virtualización, smart metering',
+    sdg12:              'Producción responsable — RAEE circular, papel reciclado',
+    sdg13:              'Acción climática — reducción CO₂, auditoría ESG anual',
+    sdg17:              'Alianzas — colaboración entre departamentos y fabricantes',
+    months:             ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],
+    chart_school:       'Mes lectivo',
+    chart_holiday:      'Vacaciones',
+    chart_summer:       'Verano',
+    rc_projected:       'Coste mensual proyectado',
+    rc_target:          'Objetivo lineal −30%',
+    rc_legend1:         'Coste mensual con medidas aplicadas',
+    rc_legend2:         'Objetivo lineal −30% a 3 años',
+    bd_total_label:     'Coste anual estimado total',
+    m_electricity:      'Electricidad',
+    m_water:            'Agua',
+    m_supplies:         'Material de oficina',
+    m_cleaning:         'Limpieza',
+    m_co2:              'Equivalente CO₂',
+    m_academic:         'Año académico',
+    m_unit_kwh:         'kWh / año',
+    m_unit_m3:          'm³ / año',
+    m_unit_eur:         '€ / año',
+    m_unit_co2:         'kg CO₂ eq.',
+    m_unit_acad:        'kWh (Sep–Jun)',
+    cat_electricity:    'Energía',
+    cat_water:          'Agua',
+    cat_supplies:       'Consumibles',
+    cat_cleaning:       'Limpieza',
+    measures: {
+      electricity: [
+        'Virtualización Proxmox',
+        'Scripts de auto-apagado nocturno',
+        'Renovación progresiva LED a 3 años',
+        'Recondicionamiento servidores antiguos',
+      ],
+      water: [
+        'Airejadores y difusores en grifos',
+        'Reparación de fugas detectadas',
+        'Aprovechamiento de aguas pluviales',
+        'Plan de sustitución de pulsadores',
+      ],
+      supplies: [
+        'Digitalización de exámenes',
+        'Sistema de cuotas de impresión',
+        'Compra papel 100% reciclado',
+        'Devolución de tóners al fabricante',
+      ],
+      cleaning: [
+        'Compra a granel y rellenado de envases',
+        'Sustitución por productos eco-concentrados',
+        'Uso de trapos de microfibra reutilizables',
+        'Sistema de dosificación automática',
+      ],
+    },
+    calcs: [
+      { title:'Electricidad — año siguiente',   desc:'Proyección anual con tendencia ajustable.', from_label:'De', to_label:'a', var_label:'Variación', est_cost:'Coste estimado' },
+      { title:'Electricidad — periodo personalizado', desc:'Consumo estimado entre dos meses seleccionados.', from_label:'De', to_label:'a', months_label:(n)=>`${n} mes(es)` },
+      { title:'Agua — año siguiente',           desc:'Proyección anual con ciclo escolar y estacional.', var_label:'Variación', est_cost:'Coste estimado' },
+      { title:'Agua — periodo personalizado',   desc:'Consumo estimado para un rango de meses.', from_label:'De', to_label:'a', months_label:(n)=>`${n} mes(es)` },
+      { title:'Consumibles — año siguiente',    desc:'Proyección de gasto en material fungible.', var_label:'Variación', vs_base:'vs base' },
+      { title:'Consumibles — año escolar',      desc:'Gasto estimado de septiembre a junio.', of_total:'% del total anual' },
+      { title:'Limpieza — año siguiente',       desc:'Proyección de gasto en productos de limpieza.', var_label:'Variación', vs_base:'vs base' },
+      { title:'Limpieza — periodo personalizado', desc:'Gasto estimado en limpieza para un rango de meses.', from_label:'De', to_label:'a', months_label:(n)=>`${n} mes(es)` },
+    ],
+    tl_start: 'Inicio',
+    err_load:  'No se pudieron cargar los datos.',
+    err_sub:   'Comprueba tu conexión o que el repositorio sea público.',
+    err_retry: 'Reintentar',
+  }
+};
+
+function t(key) {
+  return TRANSLATIONS[currentLang][key] || TRANSLATIONS['en'][key] || key;
+}
+
+function toggleLang() {
+  currentLang = currentLang === 'en' ? 'es' : 'en';
+  const btn = document.getElementById('langBtn');
+  btn.lastChild.textContent = currentLang === 'en' ? ' ES' : ' EN';
+  applyTranslations();
+  // Re-render all dynamic content
+  if (DATA) {
+    renderMetrics();
+    renderSimulator();
+    renderCalcs();
+    renderBreakdownChart();
+    if (!document.getElementById('panel-charts').classList.contains('hidden')) renderChart();
+    if (!document.getElementById('panel-cronograma').classList.contains('hidden')) renderReductionChart();
+  }
+  updateThemeBtn();
+}
+
+function applyTranslations() {
+  // Apply data-i18n attributes in HTML
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (TRANSLATIONS[currentLang][key]) el.textContent = TRANSLATIONS[currentLang][key];
+  });
+  // Update select options
+  const sel = document.getElementById('chartIndicator');
+  if (sel) {
+    const opts = sel.options;
+    const keys = ['opt_electricity','opt_water','opt_supplies','opt_cleaning'];
+    for (let i = 0; i < opts.length; i++) opts[i].text = t(keys[i]);
+  }
+  // Update chart legend if visible
+  updateChartLegend();
+}
+
+const MONTHS      = TRANSLATIONS.en.months; // will be overridden dynamically
 const SCHOOL_MONTHS = [0,1,2,3,4,8,9,10,11];
 const MONTH_TYPE  = ['holiday','school','school','holiday','school','school','break','break','school','school','school','holiday'];
 
@@ -28,39 +326,39 @@ const SEASONAL = {
   cleaning:   [1.05,1.00,1.00,1.00,1.00,0.70,0.40,0.40,1.10,1.05,1.00,1.00],
 };
 
-// Optimisation measures per category
+// Optimisation measures per category — labels resolved dynamically via i18n
 const MEASURES = {
   electricity: [
-    { id:'e1', label:'Virtualització Proxmox',              pct:15, year:1 },
-    { id:'e2', label:"Scripts d'auto-apagat nocturn",       pct:10, year:1 },
-    { id:'e3', label:'Renovació progressiva LED a 3 anys',  pct: 8, year:1 },
-    { id:'e4', label:'Recondicionament servidors antics',   pct: 5, year:2 },
+    { id:'e1', get label(){ return t('measures').electricity[0]; }, pct:15, year:1 },
+    { id:'e2', get label(){ return t('measures').electricity[1]; }, pct:10, year:1 },
+    { id:'e3', get label(){ return t('measures').electricity[2]; }, pct: 8, year:1 },
+    { id:'e4', get label(){ return t('measures').electricity[3]; }, pct: 5, year:2 },
   ],
   water: [
-    { id:'w1', label:'Airejadors i difusors en aixetes',    pct:20, year:1 },
-    { id:'w2', label:'Reparació de fuites detectades',      pct:10, year:1 },
-    { id:'w3', label:"Aprofitament d'aigües pluvials",      pct: 8, year:2 },
-    { id:'w4', label:'Pla de substitució de polsadors',     pct: 5, year:2 },
+    { id:'w1', get label(){ return t('measures').water[0]; }, pct:20, year:1 },
+    { id:'w2', get label(){ return t('measures').water[1]; }, pct:10, year:1 },
+    { id:'w3', get label(){ return t('measures').water[2]; }, pct: 8, year:2 },
+    { id:'w4', get label(){ return t('measures').water[3]; }, pct: 5, year:2 },
   ],
   supplies: [
-    { id:'s1', label:"Digitalització d'exàmens",            pct:40, year:1 },
-    { id:'s2', label:"Sistema de quotes d'impressió",       pct:15, year:1 },
-    { id:'s3', label:'Compra paper 100% reciclat',          pct:10, year:2 },
-    { id:'s4', label:'Devolució de tòners al fabricant',    pct: 5, year:3 },
+    { id:'s1', get label(){ return t('measures').supplies[0]; }, pct:40, year:1 },
+    { id:'s2', get label(){ return t('measures').supplies[1]; }, pct:15, year:1 },
+    { id:'s3', get label(){ return t('measures').supplies[2]; }, pct:10, year:2 },
+    { id:'s4', get label(){ return t('measures').supplies[3]; }, pct: 5, year:3 },
   ],
   cleaning: [
-    { id:'c1', label:"Compra a granel i farciment d'envasos",     pct:30, year:1 },
-    { id:'c2', label:'Substitució per productes eco-concentrats', pct:20, year:2 },
-    { id:'c3', label:'Ús de draps de microfibra reutilitzables',  pct:15, year:2 },
-    { id:'c4', label:'Sistema de dosificació automàtica',         pct:10, year:3 },
+    { id:'c1', get label(){ return t('measures').cleaning[0]; }, pct:30, year:1 },
+    { id:'c2', get label(){ return t('measures').cleaning[1]; }, pct:20, year:2 },
+    { id:'c3', get label(){ return t('measures').cleaning[2]; }, pct:15, year:2 },
+    { id:'c4', get label(){ return t('measures').cleaning[3]; }, pct:10, year:3 },
   ],
 };
 
 const CAT_META = {
-  electricity:{ label:'Energia',     icon:'⚡', color:'elec',     unit:'kWh', costPer:0.18, hasCost:true  },
-  water:      { label:'Aigua',       icon:'💧', color:'water',    unit:'m³',  costPer:2.45, hasCost:true  },
-  supplies:   { label:'Consumibles', icon:'📄', color:'supplies', unit:'€',   costPer:1,    hasCost:false },
-  cleaning:   { label:'Neteja',      icon:'🧹', color:'cleaning', unit:'€',   costPer:1,    hasCost:false },
+  electricity:{ get label(){ return t('cat_electricity'); }, icon:'⚡', color:'elec',     unit:'kWh', costPer:0.18, hasCost:true  },
+  water:      { get label(){ return t('cat_water');       }, icon:'💧', color:'water',    unit:'m³',  costPer:2.45, hasCost:true  },
+  supplies:   { get label(){ return t('cat_supplies');    }, icon:'📄', color:'supplies', unit:'€',   costPer:1,    hasCost:false },
+  cleaning:   { get label(){ return t('cat_cleaning');    }, icon:'🧹', color:'cleaning', unit:'€',   costPer:1,    hasCost:false },
 };
 
 // ─── State ────────────────────────────────────────────────────────────────────
@@ -72,15 +370,20 @@ const checkedMeasures = new Set();
 
 // ─── Theme ────────────────────────────────────────────────────────────────────
 
+function updateThemeBtn() {
+  const btn = document.getElementById('themeBtn');
+  if (!btn) return;
+  if (isDark) {
+    btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M13 10A6 6 0 016 3a6 6 0 100 10 6 6 0 007-3z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg> ${t('theme_dark')}`;
+  } else {
+    btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="4" stroke="currentColor" stroke-width="1.5"/><line x1="8" y1="1" x2="8" y2="3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="8" y1="13" x2="8" y2="15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="1" y1="8" x2="3" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="13" y1="8" x2="15" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> ${t('theme_light')}`;
+  }
+}
+
 function toggleTheme() {
   isDark = !isDark;
   document.documentElement.setAttribute('data-theme', isDark ? 'dark' : '');
-  const btn = document.getElementById('themeBtn');
-  if (isDark) {
-    btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M13 10A6 6 0 016 3a6 6 0 100 10 6 6 0 007-3z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg> Dark mode`;
-  } else {
-    btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="4" stroke="currentColor" stroke-width="1.5"/><line x1="8" y1="1" x2="8" y2="3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="8" y1="13" x2="8" y2="15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="1" y1="8" x2="3" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="13" y1="8" x2="15" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> Light mode`;
-  }
+  updateThemeBtn();
   if (chartInstance) renderChart();
   renderBreakdownChart();
   renderReductionChart();
@@ -143,10 +446,10 @@ function isSandboxed() {
 async function autoLoad() {
   if (isSandboxed()) {
     DATA = parseDocuments(FALLBACK_DATA);
-    setStatus('ok','Data loaded (bundled)');
+    setStatus('ok', t('data_bundled'));
     renderAll(); return;
   }
-  setStatus('loading','Loading data from GitHub…');
+  setStatus('loading', t('loading_github'));
   try {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 5000);
@@ -154,11 +457,11 @@ async function autoLoad() {
     clearTimeout(timer);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     DATA = parseDocuments(await res.json());
-    setStatus('ok','Data loaded — dataclean.json · ITB2526-LiamTebar');
+    setStatus('ok', t('data_loaded'));
     renderAll();
   } catch(e) {
     DATA = parseDocuments(FALLBACK_DATA);
-    setStatus('ok','Loaded from bundled data — GitHub unreachable');
+    setStatus('ok', t('data_fallback'));
     renderAll();
   }
 }
@@ -219,12 +522,12 @@ function renderMetrics() {
   const acadElec = Math.round(sumMonths('electricity', SCHOOL_MONTHS));
 
   document.getElementById('metricsGrid').innerHTML = [
-    { label:'Electricity',     value:elec.toLocaleString('ca'),      unit:'kWh / any'    },
-    { label:'Water',           value:water.toLocaleString('ca'),     unit:'m³ / any'     },
-    { label:'Office supplies', value:supp.toLocaleString('ca'),      unit:'€ / any'      },
-    { label:'Cleaning',        value:clean.toLocaleString('ca'),     unit:'€ / any'      },
-    { label:'CO₂ equivalent',  value:co2.toLocaleString('ca'),       unit:'kg CO₂ eq.'   },
-    { label:'Any acadèmic',    value:acadElec.toLocaleString('ca'),  unit:'kWh (Set–Jun)'},
+    { label:t('m_electricity'),  value:elec.toLocaleString('ca'),      unit:t('m_unit_kwh')  },
+    { label:t('m_water'),        value:water.toLocaleString('ca'),     unit:t('m_unit_m3')   },
+    { label:t('m_supplies'),     value:supp.toLocaleString('ca'),      unit:t('m_unit_eur')  },
+    { label:t('m_cleaning'),     value:clean.toLocaleString('ca'),     unit:t('m_unit_eur')  },
+    { label:t('m_co2'),          value:co2.toLocaleString('ca'),       unit:t('m_unit_co2')  },
+    { label:t('m_academic'),     value:acadElec.toLocaleString('ca'),  unit:t('m_unit_acad') },
   ].map(c => `
     <div class="metric-card">
       <div class="m-label">${c.label}</div>
@@ -265,11 +568,11 @@ function renderSimulator() {
   container.innerHTML = `
     <div class="sim-layout">
       <div class="sim-left">
-        <div class="section-label">Mesures de reducció aplicables</div>
+        <div class="section-label">${t('reduction_measures')}</div>
         <div class="sim-cols">${colsHtml}</div>
       </div>
       <div class="sim-right">
-        <div class="section-label">Resultats en temps real</div>
+        <div class="section-label">${t('realtime_results')}</div>
         <div id="simResults"></div>
       </div>
     </div>`;
@@ -328,8 +631,8 @@ function renderSimResults() {
           <div class="sr-right-info">
             <div class="sr-proj-val${redPct>0?' improved':''}">${projStr}</div>
             ${redPct > 0
-              ? `<div class="sr-saving-badge">−${redPct}% &nbsp;·&nbsp; estalvi €${saving.toLocaleString('ca')}</div>`
-              : `<div class="sr-saving-badge neutral">sense canvis</div>`}
+              ? `<div class="sr-saving-badge">${t('savings_label')(redPct, saving.toLocaleString('ca'))}</div>`
+              : `<div class="sr-saving-badge neutral">${t('no_changes')}</div>`}
           </div>
         </div>
         <div class="sr-progress">
@@ -345,13 +648,13 @@ function renderSimResults() {
   el.innerHTML = `
     <div class="sr-list">${rows}</div>
     <div class="sr-total-bar${totalSaving>0?' saving':''}">
-      <span class="sr-total-label">Cost anual total</span>
+      <span class="sr-total-label">${t('annual_cost')}</span>
       <span class="sr-total-vals">
         <span class="sr-total-base${totalSaving>0?' striked':''}">€${totalBase.toLocaleString('ca')}</span>
         ${totalSaving > 0 ? `
           <span class="sr-arrow">→</span>
           <span class="sr-total-new">€${totalProj.toLocaleString('ca')}</span>
-          <span class="sr-total-tag">−${totalPct}%&nbsp; estalvi €${totalSaving.toLocaleString('ca')}</span>
+          <span class="sr-total-tag">−${totalPct}%&nbsp; ${currentLang==='es'?'ahorro':'savings'} €${totalSaving.toLocaleString('ca')}</span>
         ` : ''}
       </span>
     </div>`;
@@ -360,82 +663,84 @@ function renderSimResults() {
 // ─── Calculations (now in its own tab) ───────────────────────────────────────
 
 function monthOptions(sel) {
-  return MONTHS.map((m,i) => `<option value="${i}"${i===sel?' selected':''}>${m}</option>`).join('');
+  return t('months').map((m,i) => `<option value="${i}"${i===sel?' selected':''}>${m}</option>`).join('');
 }
 
 function getCalcDefinitions() {
+  const cl = TRANSLATIONS[currentLang].calcs;
+  const mo = (sel) => t('months').map((m,i) => `<option value="${i}"${i===sel?' selected':''}>${m}</option>`).join('');
   return [
-    { id:'c1', cat:'electricity', title:'Electricitat — any vinent',
-      desc:'Projecció anual amb tendència ajustable.',
-      inputs:`<div class="input-row"><label>Variació</label><input type="number" id="c1_var" value="3" min="-50" max="50" step="1" oninput="updateCalcResults()"><span class="pct-label">%</span></div>`,
+    { id:'c1', cat:'electricity', title: cl[0].title,
+      desc: cl[0].desc,
+      inputs:`<div class="input-row"><label>${cl[0].var_label}</label><input type="number" id="c1_var" value="3" min="-50" max="50" step="1" oninput="updateCalcResults()"><span class="pct-label">%</span></div>`,
       calc() {
         const v=parseFloat(document.getElementById('c1_var')?.value||0);
         const p=Math.round(getProjectedValue('electricity')*(1+v/100));
-        return { main:p.toLocaleString('ca')+' kWh', sec:`Cost estimat: €${Math.round(p*0.18).toLocaleString('ca')}` };
+        return { main:p.toLocaleString('ca')+' kWh', sec:`${cl[0].est_cost}: €${Math.round(p*0.18).toLocaleString('ca')}` };
       }},
-    { id:'c2', cat:'electricity', title:'Electricitat — periode personalitzat',
-      desc:'Consum estimat entre dos mesos seleccionats.',
-      inputs:`<div class="input-row"><label>De</label><select id="c2_from" onchange="updateCalcResults()">${monthOptions(8)}</select><label>a</label><select id="c2_to" onchange="updateCalcResults()">${monthOptions(11)}</select></div>`,
+    { id:'c2', cat:'electricity', title: cl[1].title,
+      desc: cl[1].desc,
+      inputs:`<div class="input-row"><label>${cl[1].from_label}</label><select id="c2_from" onchange="updateCalcResults()">${mo(8)}</select><label>${cl[1].to_label}</label><select id="c2_to" onchange="updateCalcResults()">${mo(11)}</select></div>`,
       calc() {
         const f=parseInt(document.getElementById('c2_from')?.value??8);
-        const t=parseInt(document.getElementById('c2_to')?.value??11);
-        const ms=buildMonthRange(f,t);
+        const to=parseInt(document.getElementById('c2_to')?.value??11);
+        const ms=buildMonthRange(f,to);
         const v=Math.round(sumMonths('electricity',ms,getProjectedValue('electricity')));
-        return { main:v.toLocaleString('ca')+' kWh', sec:`${ms.length} mes(os)` };
+        return { main:v.toLocaleString('ca')+' kWh', sec:cl[1].months_label(ms.length) };
       }},
-    { id:'c3', cat:'water', title:'Aigua — any vinent',
-      desc:'Projecció anual amb cicle escolar i estacional.',
-      inputs:`<div class="input-row"><label>Variació</label><input type="number" id="c3_var" value="2" min="-50" max="50" step="1" oninput="updateCalcResults()"><span class="pct-label">%</span></div>`,
+    { id:'c3', cat:'water', title: cl[2].title,
+      desc: cl[2].desc,
+      inputs:`<div class="input-row"><label>${cl[2].var_label}</label><input type="number" id="c3_var" value="2" min="-50" max="50" step="1" oninput="updateCalcResults()"><span class="pct-label">%</span></div>`,
       calc() {
         const v=parseFloat(document.getElementById('c3_var')?.value||0);
         const p=Math.round(getProjectedValue('water')*(1+v/100)*10)/10;
-        return { main:p.toLocaleString('ca')+' m³', sec:`Cost estimat: €${Math.round(p*2.45).toLocaleString('ca')}` };
+        return { main:p.toLocaleString('ca')+' m³', sec:`${cl[2].est_cost}: €${Math.round(p*2.45).toLocaleString('ca')}` };
       }},
-    { id:'c4', cat:'water', title:'Aigua — periode personalitzat',
-      desc:'Consum estimat per un rang de mesos.',
-      inputs:`<div class="input-row"><label>De</label><select id="c4_from" onchange="updateCalcResults()">${monthOptions(8)}</select><label>a</label><select id="c4_to" onchange="updateCalcResults()">${monthOptions(11)}</select></div>`,
+    { id:'c4', cat:'water', title: cl[3].title,
+      desc: cl[3].desc,
+      inputs:`<div class="input-row"><label>${cl[3].from_label}</label><select id="c4_from" onchange="updateCalcResults()">${mo(8)}</select><label>${cl[3].to_label}</label><select id="c4_to" onchange="updateCalcResults()">${mo(11)}</select></div>`,
       calc() {
         const f=parseInt(document.getElementById('c4_from')?.value??8);
-        const t=parseInt(document.getElementById('c4_to')?.value??11);
-        const ms=buildMonthRange(f,t);
+        const to=parseInt(document.getElementById('c4_to')?.value??11);
+        const ms=buildMonthRange(f,to);
         const v=Math.round(sumMonths('water',ms,getProjectedValue('water'))*10)/10;
-        return { main:v.toLocaleString('ca')+' m³', sec:`${ms.length} mes(os)` };
+        return { main:v.toLocaleString('ca')+' m³', sec:cl[3].months_label(ms.length) };
       }},
-    { id:'c5', cat:'supplies', title:'Consumibles — any vinent',
-      desc:'Projecció de despesa en material fungible.',
-      inputs:`<div class="input-row"><label>Variació</label><input type="number" id="c5_var" value="-5" min="-80" max="50" step="1" oninput="updateCalcResults()"><span class="pct-label">%</span></div>`,
+    { id:'c5', cat:'supplies', title: cl[4].title,
+      desc: cl[4].desc,
+      inputs:`<div class="input-row"><label>${cl[4].var_label}</label><input type="number" id="c5_var" value="-5" min="-80" max="50" step="1" oninput="updateCalcResults()"><span class="pct-label">%</span></div>`,
       calc() {
         const v=parseFloat(document.getElementById('c5_var')?.value||0);
         const p=Math.round(getProjectedValue('supplies')*(1+v/100));
         const diff=p-Math.round(getVal('supplies'));
-        return { main:'€'+p.toLocaleString('ca'), sec:`${diff>=0?'+':''}€${diff.toLocaleString('ca')} vs base` };
+        return { main:'€'+p.toLocaleString('ca'), sec:`${diff>=0?'+':''}€${diff.toLocaleString('ca')} ${cl[4].vs_base}` };
       }},
-    { id:'c6', cat:'supplies', title:'Consumibles — curs escolar',
-      desc:'Despesa estimada de setembre a juny.',
+    { id:'c6', cat:'supplies', title: cl[5].title,
+      desc: cl[5].desc,
       inputs:'',
       calc() {
         const p=getProjectedValue('supplies');
         const v=Math.round(sumMonths('supplies',SCHOOL_MONTHS,p));
-        return { main:'€'+v.toLocaleString('ca'), sec:`${p>0?Math.round(v/p*100):0}% del total anual` };
+        return { main:'€'+v.toLocaleString('ca'), sec:`${p>0?Math.round(v/p*100):0}${cl[5].of_total}` };
       }},
-    { id:'c7', cat:'cleaning', title:'Neteja — any vinent',
-      desc:'Projecció de despesa en productes de neteja.',
-      inputs:`<div class="input-row"><label>Variació</label><input type="number" id="c7_var" value="0" min="-80" max="50" step="1" oninput="updateCalcResults()"><span class="pct-label">%</span></div>`,
+    { id:'c7', cat:'cleaning', title: cl[6].title,
+      desc: cl[6].desc,
+      inputs:`<div class="input-row"><label>${cl[6].var_label}</label><input type="number" id="c7_var" value="0" min="-80" max="50" step="1" oninput="updateCalcResults()"><span class="pct-label">%</span></div>`,
       calc() {
         const v=parseFloat(document.getElementById('c7_var')?.value||0);
         const p=Math.round(getProjectedValue('cleaning')*(1+v/100));
         const diff=p-Math.round(getVal('cleaning'));
-        return { main:'€'+p.toLocaleString('ca'), sec:`${diff>=0?'+':''}€${diff.toLocaleString('ca')} vs base` };
+        return { main:'€'+p.toLocaleString('ca'), sec:`${diff>=0?'+':''}€${diff.toLocaleString('ca')} ${cl[6].vs_base}` };
       }},
-    { id:'c8', cat:'cleaning', title:'Neteja — periode personalitzat',
-      desc:'Despesa estimada en neteja per un rang de mesos.',
-      inputs:`<div class="input-row"><label>De</label><select id="c8_from" onchange="updateCalcResults()">${monthOptions(8)}</select><label>a</label><select id="c8_to" onchange="updateCalcResults()">${monthOptions(11)}</select></div>`,
+    { id:'c8', cat:'cleaning', title: cl[7].title,
+      desc: cl[7].desc,
+      inputs:`<div class="input-row"><label>${cl[7].from_label}</label><select id="c8_from" onchange="updateCalcResults()">${mo(8)}</select><label>${cl[7].to_label}</label><select id="c8_to" onchange="updateCalcResults()">${mo(11)}</select></div>`,
       calc() {
         const f=parseInt(document.getElementById('c8_from')?.value??8);
-        const t=parseInt(document.getElementById('c8_to')?.value??11);
-        const ms=buildMonthRange(f,t);
+        const to=parseInt(document.getElementById('c8_to')?.value??11);
+        const ms=buildMonthRange(f,to);
         const v=Math.round(sumMonths('cleaning',ms,getProjectedValue('cleaning')));
-        return { main:'€'+v.toLocaleString('ca'), sec:`${ms.length} mes(os)` };
+        return { main:'€'+v.toLocaleString('ca'), sec:cl[7].months_label(ms.length) };
       }},
   ];
 }
@@ -452,7 +757,7 @@ function renderCalcs() {
       <div class="calc-desc">${c.desc}</div>
       ${c.inputs}
       <div class="calc-result">
-        <div class="r-label">Resultat</div>
+        <div class="r-label">${t('calc_result_label')}</div>
         <div class="r-val" id="rval_${c.id}">—</div>
         <div class="r-secondary" id="rsec_${c.id}"></div>
       </div>
@@ -490,10 +795,10 @@ function renderChart() {
   const ctx = document.getElementById('monthlyChart')?.getContext('2d');
   if (!ctx) return;
 
-  const CLABELS = { school:'Mes lectiu', holiday:'Vacances', break:'Estiu' };
+  const CLABELS = { school: t('chart_school'), holiday: t('chart_holiday'), break: t('chart_summer') };
   chartInstance = new Chart(ctx, {
     type:'bar',
-    data:{ labels:MONTHS, datasets:[{ label:key, data,
+    data:{ labels: t('months'), datasets:[{ label:key, data,
       backgroundColor:MONTH_TYPE.map(t=>COLOR[t]), borderRadius:4, borderSkipped:false }] },
     options:{
       responsive:true, maintainAspectRatio:false,
@@ -514,9 +819,9 @@ function updateChartLegend() {
   const el = document.getElementById('chartLegend');
   if (!el) return;
   el.innerHTML = [
-    { color:isDark?'#4db87a':'#1a5c3a', label:'Mes lectiu'  },
-    { color:isDark?'#e07840':'#b85c1a', label:'Vacances'    },
-    { color:isDark?'#3a3a35':'#d4d2cc', label:'Estiu'       },
+    { color:isDark?'#4db87a':'#1a5c3a', label: t('chart_school')  },
+    { color:isDark?'#e07840':'#b85c1a', label: t('chart_holiday') },
+    { color:isDark?'#3a3a35':'#d4d2cc', label: t('chart_summer')  },
   ].map(it => `<span class="legend-item"><span class="legend-dot" style="background:${it.color}"></span>${it.label}</span>`).join('');
 }
 
@@ -541,10 +846,10 @@ function renderBreakdownChart() {
   const grandTotal = elecCost + waterCost + suppCost + cleanCost;
 
   const items = [
-    { label:'Energia',     value:elecCost,  rawVal:elec,  rawUnit:'kWh', color:isDark?'#4db87a':'#1a5c3a' },
-    { label:'Aigua',       value:waterCost, rawVal:water, rawUnit:'m³',  color:isDark?'#4a9fd4':'#1a6a9a' },
-    { label:'Consumibles', value:suppCost,  rawVal:null,  rawUnit:'',    color:isDark?'#9a70e0':'#5a3ab0' },
-    { label:'Neteja',      value:cleanCost, rawVal:null,  rawUnit:'',    color:isDark?'#e07840':'#b07c10' },
+    { label: t('cat_electricity'), value:elecCost,  rawVal:elec,  rawUnit:'kWh', color:isDark?'#4db87a':'#1a5c3a' },
+    { label: t('cat_water'),       value:waterCost, rawVal:water, rawUnit:'m³',  color:isDark?'#4a9fd4':'#1a6a9a' },
+    { label: t('cat_supplies'),    value:suppCost,  rawVal:null,  rawUnit:'',    color:isDark?'#9a70e0':'#5a3ab0' },
+    { label: t('cat_cleaning'),    value:cleanCost, rawVal:null,  rawUnit:'',    color:isDark?'#e07840':'#b07c10' },
   ];
 
   barsEl.innerHTML = items.map(item => {
@@ -562,7 +867,7 @@ function renderBreakdownChart() {
     </div>`;
   }).join('');
 
-  if (totalEl) totalEl.innerHTML = `Cost anual estimat total&ensp;<strong>€${grandTotal.toLocaleString('ca')}</strong>`;
+  if (totalEl) totalEl.innerHTML = `${t('bd_total_label')}&ensp;<strong>€${grandTotal.toLocaleString('ca')}</strong>`;
 }
 
 // ─── Reduction trend chart (36 months) ───────────────────────────────────────
@@ -612,12 +917,12 @@ function renderReductionChart() {
 
   for (let m = 0; m <= 36; m++) {
     if (m === 0) {
-      labels.push('Inici');
+      labels.push(t('tl_start'));
     } else {
       const yr  = Math.ceil(m / 12);
       const mo  = ((m - 1) % 12) + 1;
-      const monthNames = ['Gen','Feb','Mar','Abr','Mai','Jun','Jul','Ago','Set','Oct','Nov','Des'];
-      labels.push(mo === 1 ? `Any ${yr}` : (mo === 7 ? monthNames[m % 12 === 0 ? 11 : (m % 12) - 1] : ''));
+      const monthNames = t('months');
+      labels.push(mo === 1 ? `${currentLang==='es'?'Año':'Year'} ${yr}` : (mo === 7 ? monthNames[m % 12 === 0 ? 11 : (m % 12) - 1] : ''));
     }
     const monthly = (baseCost / 12) * costFactorAt(m);
     dataActual.push(Math.round(monthly));
@@ -638,7 +943,7 @@ function renderReductionChart() {
       labels,
       datasets: [
         {
-          label: 'Cost mensual projectat',
+          label: t('rc_projected'),
           data: dataActual,
           borderColor: accentColor,
           backgroundColor: isDark ? 'rgba(77,184,122,0.10)' : 'rgba(26,92,58,0.08)',
@@ -649,7 +954,7 @@ function renderReductionChart() {
           tension: 0.45,
         },
         {
-          label: 'Objectiu lineal −30%',
+          label: t('rc_target'),
           data: dataTarget,
           borderColor: targetColor,
           borderWidth: 1.5,
@@ -702,8 +1007,8 @@ function renderReductionChart() {
   const legendEl = document.getElementById('reductionLegend');
   if (legendEl) {
     legendEl.innerHTML = [
-      { color: accentColor, label: 'Cost mensual amb mesures aplicades' },
-      { color: targetColor, dashed: true, label: 'Objectiu lineal −30% a 3 anys' },
+      { color: accentColor, label: t('rc_legend1') },
+      { color: targetColor, dashed: true, label: t('rc_legend2') },
     ].map(it => `
       <span class="legend-item">
         <span class="legend-dot" style="background:${it.color};${it.dashed?'opacity:.6':''}"></span>
@@ -714,4 +1019,4 @@ function renderReductionChart() {
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
-window.addEventListener('DOMContentLoaded', autoLoad);
+window.addEventListener('DOMContentLoaded', () => { applyTranslations(); autoLoad(); });
